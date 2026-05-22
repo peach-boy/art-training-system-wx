@@ -1,0 +1,27 @@
+<view class="page-profile">
+  <view class="profile-hero">
+    <view class="profile-avatar">{{avatarText}}</view>
+    <view class="profile-name">{{displayName}}</view>
+    <view class="profile-meta">{{username}} · {{roleLabel}}</view>
+  </view>
+
+  <view class="profile-body">
+    <view class="profile-card">
+      <view class="card-title">当前门店</view>
+      <picker wx:if="{{storeOptions.length}}" range="{{storeOptions}}" range-key="label" value="{{storeIndex}}" bindchange="onStoreChange">
+        <view class="store-picker">
+          <text>{{currentStoreLabel}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+      <view wx:else class="store-picker">{{currentStoreLabel}}</view>
+      <view class="text-muted tips">录入课时须选择具体门店</view>
+    </view>
+
+    <button class="btn-ghost logout-btn" bindtap="handleLogout">退出登录</button>
+
+    <view class="beian" bindtap="copyBeian">{{icpNumber}}</view>
+  </view>
+
+  <tab-bar active="profile" />
+</view>

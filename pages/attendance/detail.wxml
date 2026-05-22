@@ -1,0 +1,28 @@
+<view class="page-detail" wx:if="{{record}}">
+  <view class="detail-hero">
+    <view class="detail-name">{{record.studentName || '—'}}</view>
+    <view class="tag tag-blue">{{lessonTypeLabel}}</view>
+  </view>
+
+  <view wx:if="{{imagePreview}}" class="detail-image-wrap" bindtap="previewImage">
+    <image class="detail-image" src="{{imagePreview}}" mode="aspectFill" />
+    <view class="detail-image-tip">点击查看大图</view>
+  </view>
+
+  <view class="detail-card">
+    <view class="info-row"><text class="label">上课日期</text><text>{{record.classDate}} {{record.dayOfWeekText || ''}}</text></view>
+    <view class="info-row"><text class="label">课包</text><text>{{record.packageName || '—'}}</text></view>
+    <view class="info-row"><text class="label">课程类型</text><text>{{record.courseTypeName || '—'}}</text></view>
+    <view class="info-row"><text class="label">课件</text><text>{{record.coursewareName || '—'}}</text></view>
+    <view class="info-row"><text class="label">授课老师</text><text>{{record.teacherName || '—'}}</text></view>
+    <view class="info-row"><text class="label">扣除课时</text><text>{{record.classesDeducted}}</text></view>
+    <view class="info-row"><text class="label">备注</text><text>{{record.notes || '—'}}</text></view>
+    <view class="info-row"><text class="label">录入时间</text><text>{{recordedAtText}}</text></view>
+  </view>
+
+  <view class="detail-footer">
+    <button class="btn-primary footer-btn" bindtap="goEdit">修正课时</button>
+  </view>
+</view>
+
+<view wx:else class="empty">加载中...</view>

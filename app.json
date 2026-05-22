@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/attendance/list",
+    "pages/attendance/detail",
+    "pages/attendance/form",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarTitleText": "ART 课时录入",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6fa",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

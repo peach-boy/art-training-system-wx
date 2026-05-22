@@ -1,0 +1,122 @@
+<view class="page-form">
+  <view class="form-section">
+    <view class="section-head">学员信息</view>
+    <view class="form-card">
+      <view class="field-block">
+        <view class="field-label">学员 *</view>
+        <view class="scope-row">
+          <view
+            class="scope-chip {{studentScope === 'mine' ? 'active' : ''}}"
+            data-scope="mine"
+            bindtap="onStudentScopeChange"
+          >我的学员</view>
+          <view
+            class="scope-chip {{studentScope === 'all' ? 'active' : ''}}"
+            data-scope="all"
+            bindtap="onStudentScopeChange"
+          >全部学员</view>
+        </view>
+        <view class="search-row">
+          <input class="input search-input" placeholder="姓名模糊 / 首字母搜索" value="{{studentKeyword}}" bindinput="onStudentKeywordInput" bindconfirm="searchStudents" />
+          <button class="btn-ghost search-btn" size="mini" bindtap="searchStudents">搜索</button>
+        </view>
+        <picker wx:if="{{studentOptions.length}}" range="{{studentOptions}}" range-key="label" bindchange="onStudentPick">
+          <view class="cell-value">{{studentLabel || '请选择学员'}}</view>
+        </picker>
+        <view wx:else class="text-muted tips">输入关键字后搜索学员</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-head">课程信息</view>
+    <view class="form-card">
+      <view class="cell">
+        <text class="cell-label">课时类型 *</text>
+        <picker range="{{lessonTypeLabels}}" value="{{lessonTypeIndex}}" bindchange="onLessonTypeChange">
+          <view class="cell-value arrow">{{lessonTypeLabels[lessonTypeIndex]}}</view>
+        </picker>
+      </view>
+
+      <view class="cell" wx:if="{{lessonType === 'regular' || lessonType === 'renewal_pending'}}">
+        <text class="cell-label">课包 {{lessonType === 'regular' ? '*' : ''}}</text>
+        <picker range="{{packageOptions}}" range-key="label" bindchange="onPackagePick">
+          <view class="cell-value arrow {{packageLabel ? '' : 'placeholder'}}">{{packageLabel || '请选择课包'}}</view>
+        </picker>
+      </view>
+
+      <view class="field-block inner" wx:if="{{lessonType === 'temp'}}">
+        <view class="field-label">课时收入（元） *</view>
+        <input class="input" type="digit" placeholder="请输入金额" value="{{income}}" bindinput="onIncomeInput" />
+      </view>
+
+      <view class="cell">
+        <text class="cell-label">课程类型</text>
+        <picker range="{{courseTypeOptions}}" range-key="label" bindchange="onCourseTypePick">
+          <view class="cell-value arrow {{courseTypeLabel ? '' : 'placeholder'}}">{{courseTypeLabel || '请选择'}}</view>
+        </picker>
+      </view>
+
+      <view class="field-block inner">
+        <view class="field-label">课件</view>
+        <picker range="{{coursewareOptions}}" range-key="label" bindchange="onCoursewarePick">
+          <view class="cell-value {{coursewareLabel ? '' : 'placeholder'}}">{{coursewareLabel || '可选'}}</view>
+        </picker>
+        <input class="input custom-name" placeholder="或输入自定义课件名" value="{{customCoursewareName}}" bindinput="onCustomCoursewareInput" />
+      </view>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-head">上课信息</view>
+    <view class="form-card">
+      <view class="cell">
+        <text class="cell-label">授课老师</text>
+        <view class="cell-value">{{selfTeacherName || teacherLabel || '当前登录老师'}}</view>
+      </view>
+      <view class="cell">
+        <text class="cell-label">上课日期 *</text>
+        <picker mode="date" value="{{classDate}}" bindchange="onClassDateChange">
+          <view class="cell-value arrow">{{classDate || '请选择日期'}}</view>
+        </picker>
+      </view>
+      <view class="cell" wx:if="{{lessonType !== 'temp'}}">
+        <text class="cell-label">扣除课时</text>
+        <picker range="{{deductOptions}}" bindchange="onDeductChange">
+          <view class="cell-value arrow">{{classesDeducted}}</view>
+        </picker>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-head">课堂照片</view>
+    <view class="form-card">
+      <view class="upload-area">
+        <view wx:if="{{imagePreview}}" class="upload-preview-wrap">
+          <image class="upload-preview" src="{{imagePreview}}" mode="aspectFill" bindtap="previewImage" />
+          <view class="upload-remove" bindtap="removeImage">×</view>
+        </view>
+        <view wx:else class="upload-placeholder" bindtap="chooseImage">
+          <view class="upload-plus">+</view>
+          <text>上传课堂照片</text>
+          <text class="upload-hint">支持相册或拍照</text>
+        </view>
+        <view wx:if="{{uploadingImage}}" class="upload-loading">上传中...</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="form-section">
+    <view class="section-head">备注</view>
+    <view class="form-card">
+      <textarea class="textarea" placeholder="备注信息（可选）" value="{{notes}}" bindinput="onNotesInput" />
+    </view>
+  </view>
+
+  <view class="form-footer">
+    <button class="btn-primary footer-btn" loading="{{submitting}}" bindtap="handleSubmit">
+      {{mode === 'edit' ? '保存修改' : '提交录入'}}
+    </button>
+  </view>
+</view>

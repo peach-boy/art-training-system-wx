@@ -1,0 +1,40 @@
+<view class="page-home">
+  <view class="hero">
+    <view class="hero-top">
+      <view>
+        <view class="hero-greet">你好，{{displayName}}</view>
+        <view class="hero-sub">课时录入 · 教师端</view>
+      </view>
+      <view class="hero-avatar" bindtap="onLogout">{{avatarText}}</view>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view class="month-card">
+      <view class="month-label">{{monthLabel || '本月'}}已上课时</view>
+      <view class="month-num">{{monthClassHours}}</view>
+      <view class="month-unit">节</view>
+    </view>
+
+    <view class="action-card" bindtap="goAddRecord">
+      <view class="action-card-left">
+        <view class="action-title">录入课时</view>
+        <view class="action-desc">选择学员，填写上课信息并上传课堂照片</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+
+    <view class="stats-row">
+      <view class="stat-card" bindtap="goAttendanceList">
+        <view class="stat-num">{{recordTotal}}</view>
+        <view class="stat-label">我的课时记录</view>
+      </view>
+      <view class="stat-card" bindtap="goAttendanceList">
+        <view class="stat-num stat-num-text">查看</view>
+        <view class="stat-label">全部记录</view>
+      </view>
+    </view>
+  </view>
+
+  <tab-bar active="home" />
+</view>

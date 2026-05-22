@@ -1,0 +1,45 @@
+<view class="page-list">
+  <view class="list-header">
+    <view class="list-title">课时记录</view>
+    <view class="filter-bar">
+      <picker mode="date" value="{{startDate}}" bindchange="onStartDateChange">
+        <view class="filter-chip">{{startDate || '开始日期'}}</view>
+      </picker>
+      <text class="filter-sep">至</text>
+      <picker mode="date" value="{{endDate}}" bindchange="onEndDateChange">
+        <view class="filter-chip">{{endDate || '结束日期'}}</view>
+      </picker>
+      <view class="filter-actions">
+        <text class="filter-btn" bindtap="onSearch">筛选</text>
+        <text class="filter-btn ghost" bindtap="onReset">重置</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading && list.length === 0}}" class="empty">加载中...</view>
+  <view wx:elif="{{list.length === 0}}" class="empty">暂无课时记录</view>
+
+  <view class="record-list">
+    <view class="record-item" wx:for="{{list}}" wx:key="recordId" bindtap="goDetail" data-id="{{item.recordId}}">
+      <view class="record-thumb">
+        <image wx:if="{{item.imagePreview}}" class="record-img" src="{{item.imagePreview}}" mode="aspectFill" />
+        <view wx:else class="record-img record-img-empty">图</view>
+      </view>
+      <view class="record-content">
+        <view class="record-head">
+          <text class="record-name">{{item.studentName || '—'}}</text>
+          <text class="tag tag-blue">{{item.lessonTypeLabel}}</text>
+        </view>
+        <view class="record-sub">{{item.classDate}} · 扣 {{item.classesDeducted}} 课时</view>
+        <view class="record-sub text-muted">{{item.packageName || '无课包'}}</view>
+      </view>
+      <text class="record-chevron">›</text>
+    </view>
+  </view>
+
+  <view wx:if="{{hasMore}}" class="load-more">
+    <button class="btn-ghost" loading="{{loadingMore}}" bindtap="loadMore">加载更多</button>
+  </view>
+
+  <tab-bar active="records" />
+</view>
