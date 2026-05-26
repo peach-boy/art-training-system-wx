@@ -31,21 +31,21 @@
 
         <view v-if="needCaptcha" class="field field-captcha">
           <text class="field-label">验证码</text>
-          <view class="captcha-row">
-            <input
-              v-model="captchaCode"
-              class="field-input captcha-input"
-              placeholder="验证码"
-              placeholder-class="field-ph"
-            />
+          <input
+            v-model="captchaCode"
+            class="field-input"
+            placeholder="请输入验证码"
+            placeholder-class="field-ph"
+          />
+          <view class="captcha-box" @tap="loadCaptcha">
             <image
               v-if="captchaImage"
               class="captcha-img"
               :src="captchaImage"
-              mode="aspectFit"
-              @tap="loadCaptcha"
+              mode="widthFix"
             />
-            <view v-else class="captcha-placeholder" @tap="loadCaptcha">刷新</view>
+            <view v-else class="captcha-placeholder">点击获取验证码</view>
+            <text v-if="captchaImage" class="captcha-hint">点击图片刷新</text>
           </view>
         </view>
 
@@ -232,32 +232,41 @@ function copyIcp() {
   color: #929292;
 }
 
-.captcha-row {
-  display: flex;
-  gap: 16rpx;
-  align-items: center;
-}
-
-.captcha-input {
-  flex: 1;
-}
-
-.captcha-img,
-.captcha-placeholder {
-  width: 200rpx;
-  height: 88rpx;
+.captcha-box {
+  margin-top: 16rpx;
+  width: 100%;
+  background: #fff;
   border-radius: var(--radius-sm);
   border: 1rpx solid var(--hairline);
-  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.captcha-img {
+  width: 100%;
+  display: block;
+  vertical-align: top;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
 .captcha-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24rpx;
+  min-height: 150rpx;
+  font-size: 28rpx;
   color: var(--primary);
   background: var(--primary-light);
+}
+
+.captcha-hint {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-muted);
+  padding: 8rpx 0 12rpx;
+  background: #fafafa;
 }
 
 .btn-login {
