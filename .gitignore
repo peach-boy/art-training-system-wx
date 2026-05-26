@@ -4,9 +4,11 @@ project.private.config.json
 # 依赖
 node_modules/
 miniprogram_npm/
+legacy/
 
-# 构建 / 缓存
+# uni-app 构建
 dist/
+unpackage/
 .DS_Store
 *.log
 npm-debug.log*

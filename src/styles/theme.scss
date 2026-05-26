@@ -1,0 +1,21 @@
+/** 爱马仕橙品牌 + 中性色 */
+$primary: #f37021;
+$primary-light: #fff4eb;
+$ink: #222222;
+$muted: #6a6a6a;
+$hairline: #dddddd;
+$bg-page: #f7f7f7;
+$canvas: #ffffff;
+
+:root {
+  --primary: #{$primary};
+  --primary-light: #{$primary-light};
+  --text-ink: #{$ink};
+  --text-muted: #{$muted};
+  --hairline: #{$hairline};
+  --bg-page: #{$bg-page};
+  --canvas: #{$canvas};
+  --radius-sm: 16rpx;
+  --radius-md: 28rpx;
+  --radius-full: 9999rpx;
+}

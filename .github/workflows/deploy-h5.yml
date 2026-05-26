@@ -1,0 +1,41 @@
+name: Deploy H5 (Tencent CVM)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build H5
+        env:
+          UNI_PLATFORM: h5
+          VITE_H5_BASE: /m/
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build:h5
+
+      - name: Deploy to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.TENCENT_SSH_KEY }}
+          SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
+          SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" \
+            "mkdir -p /opt/art-training/mobile-h5"
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes" \
+            dist/build/h5/ "${SSH_USER}@${SSH_HOST}:/opt/art-training/mobile-h5/"
+          echo "✅ H5: https://orangeloveart.cn/m/"

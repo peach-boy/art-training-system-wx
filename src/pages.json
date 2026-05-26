@@ -1,0 +1,81 @@
+{
+  "pages": [
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/students/list",
+      "style": {
+        "navigationBarTitleText": "学员",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/students/detail",
+      "style": {
+        "navigationBarTitleText": "学员详情"
+      }
+    },
+    {
+      "path": "pages/students/package-records",
+      "style": {
+        "navigationBarTitleText": "课时核对"
+      }
+    },
+    {
+      "path": "pages/attendance/list",
+      "style": {
+        "navigationBarTitleText": "课时",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/attendance/detail",
+      "style": {
+        "navigationBarTitleText": "课时详情"
+      }
+    },
+    {
+      "path": "pages/attendance/form",
+      "style": {
+        "navigationBarTitleText": "录入课时"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/finance/cost-list",
+      "style": {
+        "navigationBarTitleText": "成本管理"
+      }
+    },
+    {
+      "path": "pages/finance/cost-form",
+      "style": {
+        "navigationBarTitleText": "录入成本"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "ART 教务",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#f7f7f7"
+  }
+}

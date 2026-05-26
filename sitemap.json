@@ -1,7 +1,0 @@
-{
-  "desc": "ART 教务记录",
-  "rules": [{
-    "action": "allow",
-    "page": "*"
-  }]
-}

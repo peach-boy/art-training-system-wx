@@ -1,0 +1,29 @@
+{
+  "name": "ART教务移动版",
+  "appid": "__UNI__ARTCMS",
+  "description": "ART 教务移动管理（教师 + 管理员）",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wx6e5d823915e06b80",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "minified": true
+    },
+    "usingComponents": true,
+    "lazyCodeLoading": "requiredComponents"
+  },
+  "h5": {
+    "title": "ART 教务移动版",
+    "router": {
+      "mode": "hash",
+      "base": "/m/"
+    },
+    "devServer": {
+      "port": 5174
+    }
+  },
+  "vueVersion": "3"
+}

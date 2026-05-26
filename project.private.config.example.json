@@ -1,7 +1,0 @@
-{
-  "description": "本地私有配置，勿提交 Git",
-  "projectname": "art-training-system-wx",
-  "setting": {
-    "urlCheck": false
-  }
-}
