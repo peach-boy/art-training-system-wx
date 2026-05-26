@@ -42,6 +42,8 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.TENCENT_SSH_KEY }}
           SSH_HOST: ${{ secrets.TENCENT_SSH_HOST }}
           SSH_USER: ${{ secrets.TENCENT_SSH_USER }}
+          # SSH 多为 IP；HTTPS 证书在域名上，公网/本机校验须用域名
+          H5_PUBLIC_HOST: ${{ vars.H5_PUBLIC_HOST || 'orangeloveart.cn' }}
         run: |
           set -e
           mkdir -p ~/.ssh
@@ -65,10 +67,20 @@ jobs:
             "${SSH_USER}@${SSH_HOST}:/tmp/"
           $SSH "sudo bash /tmp/fix-nginx-m-h5.sh && sudo bash /tmp/verify-m-h5-remote.sh"
 
-          HTML=$(curl -fsSL "https://${SSH_HOST}/m/" | head -20)
+          echo "========== 服务器本机 HTTPS 校验（Host: ${H5_PUBLIC_HOST}）=========="
+          HTML=$($SSH "curl -sSk -H 'Host: ${H5_PUBLIC_HOST}' 'https://127.0.0.1/m/'" | head -25)
           echo "$HTML"
           echo "$HTML" | grep -q '教务移动' || {
-            echo "FAIL: 公网 /m/ 仍返回 PC 页（ART-CMS），Nginx 未生效"
+            echo "FAIL: 服务器 /m/ 仍返回 PC 页或 Nginx 未指向 mobile-h5"
+            echo "请在服务器执行: sudo bash /tmp/diagnose-m-h5.sh"
             exit 1
           }
-          echo "✅ H5: https://${SSH_HOST}/m/"
+
+          echo "========== GitHub Runner 公网校验 =========="
+          if HTML_PUB=$(curl -fsSL --connect-timeout 15 "https://${H5_PUBLIC_HOST}/m/" | head -25); then
+            echo "$HTML_PUB"
+            echo "$HTML_PUB" | grep -q '教务移动' || echo "WARN: 公网 HTML 异常，但服务器本机已通过"
+          else
+            echo "WARN: Runner 访问 https://${H5_PUBLIC_HOST}/m/ 失败（勿用 IP 做 HTTPS）；部署以服务器本机校验为准"
+          fi
+          echo "✅ H5: https://${H5_PUBLIC_HOST}/m/"

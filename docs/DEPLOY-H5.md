@@ -75,7 +75,8 @@ VITE_MOBILE_H5_URL=https://orangeloveart.cn/m/
 
 | Secret | 说明 | 示例 |
 |--------|------|------|
-| `TENCENT_SSH_HOST` | 服务器 IP 或域名 | `orangeloveart.cn` |
+| `TENCENT_SSH_HOST` | 服务器 **IP**（SSH/rsync 用） | `101.43.40.75` |
+| （可选）`H5_PUBLIC_HOST` 仓库 Variable | HTTPS 校验域名，须与证书一致 | `orangeloveart.cn` |
 | `TENCENT_SSH_USER` | SSH 用户名 | `ubuntu` 或 `github` |
 | `TENCENT_SSH_KEY` | SSH 私钥全文 | `gha-cvm` 文件内容 |
 
