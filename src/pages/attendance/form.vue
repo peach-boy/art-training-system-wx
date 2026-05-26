@@ -5,7 +5,7 @@
       <view class="form-card">
         <view class="field-block">
           <view class="field-label">学员 *</view>
-          <view class="scope-row">
+          <view v-if="userStore.isAdmin" class="scope-row">
             <view
               class="scope-chip"
               :class="{ active: studentScope === 'mine' }"
@@ -95,8 +95,18 @@
       <view class="section-head">上课信息</view>
       <view class="form-card">
         <view class="cell">
-          <text class="cell-label">授课老师</text>
-          <view class="cell-value">{{ selfTeacherName || teacherLabel || '当前登录老师' }}</view>
+          <text class="cell-label">授课老师 *</text>
+          <picker
+            v-if="userStore.isAdmin"
+            :range="teacherOptions"
+            range-key="label"
+            @change="onTeacherPick"
+          >
+            <view class="cell-value arrow" :class="{ placeholder: !teacherLabel }">
+              {{ teacherLabel || '请选择授课老师' }}
+            </view>
+          </picker>
+          <view v-else class="cell-value">{{ selfTeacherName || '当前登录教师' }}</view>
         </view>
         <view class="cell">
           <text class="cell-label">上课日期 *</text>
@@ -154,8 +164,10 @@ import {
   attendanceAPI,
   coursePackageAPI,
   courseTypeAPI,
-  coursewareAPI
+  coursewareAPI,
+  teacherAPI
 } from '@/api'
+import { isAllStores } from '@/utils/finance'
 import { LESSON_TYPES, dayOfWeekFromDate } from '@/utils/lessonType'
 import { formatStudentLabel } from '@/utils/format'
 import { imageFullUrl } from '@/utils/media'
@@ -192,6 +204,7 @@ const coursewareOptions = ref([{ value: '', label: '不选课件' }])
 const coursewareId = ref(null)
 const coursewareLabel = ref('')
 const customCoursewareName = ref('')
+const teacherOptions = ref([])
 const teacherId = ref(null)
 const teacherLabel = ref('')
 const selfTeacherName = ref('')
@@ -247,15 +260,38 @@ async function initOptions() {
     courseTypeOptions.value = (courseTypes || [])
       .filter((c) => c.status === 'active')
       .map((c) => ({ value: c.typeId, label: c.typeName }))
-    teacherId.value = selfTeacherId
-    teacherLabel.value = name
-    selfTeacherName.value = name
+
+    if (userStore.isAdmin) {
+      const teachers = await teacherAPI.getList()
+      teacherOptions.value = (teachers || []).map((t) => ({
+        value: t.teacherId,
+        label: t.name || t.phone || `教师#${t.teacherId}`
+      }))
+      if (mode.value !== 'edit') {
+        teacherId.value = null
+        teacherLabel.value = ''
+      }
+    } else {
+      teacherId.value = selfTeacherId
+      teacherLabel.value = name
+      selfTeacherName.value = name
+      studentScope.value = 'mine'
+    }
+
     if (mode.value === 'edit' && recordId.value) {
       await loadRecord(recordId.value)
     }
   } catch (e) {
     uni.showToast({ title: e.message || '初始化失败', icon: 'none' })
   }
+}
+
+function onTeacherPick(e) {
+  const idx = Number(e.detail.value)
+  const picked = teacherOptions.value[idx]
+  if (!picked) return
+  teacherId.value = picked.value
+  teacherLabel.value = picked.label
 }
 
 async function loadRecord(id) {
@@ -330,14 +366,11 @@ async function onStudentPick(e) {
         courseTypeId.value = last.courseTypeId
         courseTypeLabel.value = last.courseTypeName || ''
       }
-      if (last.teacherId) {
+      if (userStore.isAdmin && last.teacherId) {
         teacherId.value = last.teacherId
         teacherLabel.value = last.teacherName || ''
-      }
-      const user = userStore.userInfo || {}
-      if (user.teacherId) {
-        teacherId.value = user.teacherId
-        teacherLabel.value = user.realName || user.username || ''
+        const hit = teacherOptions.value.find((t) => t.value === last.teacherId)
+        if (hit) teacherLabel.value = hit.label
       }
       if (last.courseTypeId) await loadCourseware(last.courseTypeId)
     }
@@ -473,7 +506,9 @@ function buildSubmitData() {
     courseTypeId: courseTypeId.value || null,
     coursewareId: isCustom ? null : coursewareId.value || null,
     coursewareName: isCustom ? customCoursewareName.value.trim() : undefined,
-    teacherId: teacherId.value || user.teacherId || null,
+    teacherId: userStore.isAdmin
+      ? teacherId.value
+      : user.teacherId || teacherId.value || null,
     classDate: classDate.value,
     dayOfWeek: dayOfWeekFromDate(classDate.value),
     classesDeducted: lessonType.value === 'temp' ? 0 : classesDeducted.value,
@@ -486,6 +521,18 @@ function buildSubmitData() {
 function validate() {
   if (uploadingImage.value) {
     uni.showToast({ title: '图片上传中，请稍候', icon: 'none' })
+    return false
+  }
+  if (userStore.isAdmin && isAllStores()) {
+    uni.showToast({ title: '请先在首页选择店铺', icon: 'none' })
+    return false
+  }
+  if (userStore.isAdmin && !teacherId.value) {
+    uni.showToast({ title: '请选择授课老师', icon: 'none' })
+    return false
+  }
+  if (!userStore.isAdmin && !userStore.userInfo?.teacherId) {
+    uni.showToast({ title: '当前账号未绑定教师', icon: 'none' })
     return false
   }
   if (!studentId.value || !classDate.value) {

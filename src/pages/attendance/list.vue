@@ -1,14 +1,39 @@
 <template>
-  <PageShell title="课时" :tab-bar="true" tab-active="attendance">
+  <PageShell :title="listTitle" :tab-bar="true" tab-active="attendance">
     <view v-if="filterStudentId" class="filter-hint">仅显示该学员的课时记录</view>
+    <view v-else-if="userStore.isTeacher" class="filter-hint">仅显示我录入的课时</view>
+
+    <view class="period-tabs card">
+      <view
+        v-for="m in periodModes"
+        :key="m.key"
+        class="period-tab"
+        :class="{ active: periodMode === m.key }"
+        @tap="setPeriodMode(m.key)"
+      >{{ m.label }}</view>
+    </view>
+
     <view class="filter card">
-      <picker mode="date" :value="startDate" @change="onStartChange">
-        <view class="filter-item">{{ startDate || '开始日期' }}</view>
-      </picker>
-      <text class="filter-sep">至</text>
-      <picker mode="date" :value="endDate" @change="onEndChange">
-        <view class="filter-item">{{ endDate || '结束日期' }}</view>
-      </picker>
+      <template v-if="periodMode === 'day'">
+        <picker mode="date" :value="anchorDate" @change="onAnchorChange">
+          <view class="filter-item filter-item--wide">{{ anchorDate }}</view>
+        </picker>
+      </template>
+
+      <template v-else-if="periodMode === 'week'">
+        <picker mode="date" :value="anchorDate" @change="onAnchorChange">
+          <view class="filter-item filter-item--wide">周内任一天：{{ anchorDate }}</view>
+        </picker>
+        <text class="range-text">{{ rangeLabel }}</text>
+      </template>
+
+      <template v-else>
+        <picker mode="date" fields="month" :value="monthValue" @change="onMonthChange">
+          <view class="filter-item filter-item--wide">{{ monthValue }}</view>
+        </picker>
+        <text class="range-text">{{ rangeLabel }}</text>
+      </template>
+
       <button class="filter-btn" size="mini" @tap="reload">查询</button>
     </view>
 
@@ -31,6 +56,9 @@
           <text>{{ item.courseTypeName || '课程' }}</text>
           <text>扣 {{ item.classesDeducted ?? '-' }} 节</text>
         </view>
+        <view v-if="userStore.isAdmin && item.teacherName" class="record-teacher">
+          授课：{{ item.teacherName }}
+        </view>
       </view>
       <view v-if="hasMore && list.length" class="load-more">{{ loadingMore ? '加载中...' : '上拉加载更多' }}</view>
     </scroll-view>
@@ -38,15 +66,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { requireLogin } from '@/stores/user'
 import { useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { attendanceAPI } from '@/api'
+import {
+  PERIOD_MODES,
+  todayStr,
+  currentMonthStr,
+  getDayRange,
+  getWeekRange,
+  getMonthRange,
+  weekRangeLabel
+} from '@/utils/dateRange'
 
 const userStore = useUserStore()
+const periodModes = PERIOD_MODES
 
 const list = ref([])
 const current = ref(1)
@@ -56,32 +94,76 @@ const loadingMore = ref(false)
 const refreshing = ref(false)
 const startDate = ref('')
 const endDate = ref('')
+const periodMode = ref('month')
+const anchorDate = ref(todayStr())
+const monthValue = ref(currentMonthStr())
 
 const hasMore = ref(false)
 const filterStudentId = ref(null)
+
+const listTitle = computed(() => (userStore.isTeacher ? '我的课时' : '课时管理'))
+
+const rangeLabel = computed(() => {
+  if (!startDate.value || !endDate.value) return ''
+  if (periodMode.value === 'day') return startDate.value
+  return weekRangeLabel(startDate.value, endDate.value)
+})
+
+function applyPeriodRange() {
+  if (periodMode.value === 'day') {
+    const r = getDayRange(anchorDate.value)
+    startDate.value = r.startDate
+    endDate.value = r.endDate
+    return
+  }
+  if (periodMode.value === 'week') {
+    const r = getWeekRange(anchorDate.value)
+    startDate.value = r.startDate
+    endDate.value = r.endDate
+    return
+  }
+  const r = getMonthRange(monthValue.value)
+  startDate.value = r.startDate
+  endDate.value = r.endDate
+}
+
+function initPeriodDefaults() {
+  anchorDate.value = todayStr()
+  monthValue.value = currentMonthStr()
+  applyPeriodRange()
+}
 
 onLoad((query) => {
   if (query.studentId) filterStudentId.value = Number(query.studentId) || query.studentId
 })
 
-function initDates() {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  startDate.value = `${y}-${m}-01`
-  endDate.value = `${y}-${m}-${String(now.getDate()).padStart(2, '0')}`
-}
-
 onShow(() => {
   if (!requireLogin()) return
-  if (!startDate.value) initDates()
+  if (!startDate.value) initPeriodDefaults()
   reload()
 })
 
 useStoreRefresh(() => {
-  if (!startDate.value) initDates()
+  if (!startDate.value) initPeriodDefaults()
   return reload()
 })
+
+function setPeriodMode(key) {
+  if (periodMode.value === key) return
+  periodMode.value = key
+  applyPeriodRange()
+  reload()
+}
+
+function onAnchorChange(e) {
+  anchorDate.value = e.detail.value
+  applyPeriodRange()
+}
+
+function onMonthChange(e) {
+  monthValue.value = e.detail.value.slice(0, 7)
+  applyPeriodRange()
+}
 
 async function fetchPage(page, append) {
   const params = {
@@ -107,6 +189,7 @@ async function fetchPage(page, append) {
 }
 
 async function reload() {
+  applyPeriodRange()
   loading.value = true
   current.value = 1
   try {
@@ -137,14 +220,6 @@ async function onRefresh() {
   refreshing.value = false
 }
 
-function onStartChange(e) {
-  startDate.value = e.detail.value
-}
-
-function onEndChange(e) {
-  endDate.value = e.detail.value
-}
-
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/attendance/detail?id=${item.recordId}` })
 }
@@ -166,6 +241,28 @@ function goDetail(item) {
   padding: 0 8rpx;
 }
 
+.period-tabs {
+  display: flex;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+}
+
+.period-tab {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  font-size: 26rpx;
+  color: var(--text-muted);
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+}
+
+.period-tab.active {
+  color: #fff;
+  background: var(--primary);
+  font-weight: 600;
+}
+
 .filter {
   display: flex;
   align-items: center;
@@ -180,7 +277,14 @@ function goDetail(item) {
   border-radius: var(--radius-sm);
 }
 
-.filter-sep {
+.filter-item--wide {
+  min-width: 200rpx;
+}
+
+.range-text {
+  flex: 1;
+  min-width: 100%;
+  font-size: 22rpx;
   color: var(--text-muted);
 }
 
@@ -191,7 +295,7 @@ function goDetail(item) {
 }
 
 .list-scroll {
-  height: calc(100vh - 360rpx);
+  height: calc(100vh - 420rpx);
 }
 
 .record-head {
@@ -215,6 +319,12 @@ function goDetail(item) {
   display: flex;
   justify-content: space-between;
   font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.record-teacher {
+  margin-top: 8rpx;
+  font-size: 22rpx;
   color: var(--text-muted);
 }
 
