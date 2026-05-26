@@ -13,15 +13,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          # lockfile 若指向内网源 repo.wuxingdev.cn，GitHub 无法 npm ci；CI 用公网重装
+          rm -f package-lock.json
+          npm install --legacy-peer-deps
 
       - name: Build H5
         env:
           UNI_PLATFORM: h5
           VITE_H5_BASE: /m/
-        run: |
-          npm ci --legacy-peer-deps
-          npm run build:h5
+        run: npx uni build
 
       - name: Deploy to server
         env:

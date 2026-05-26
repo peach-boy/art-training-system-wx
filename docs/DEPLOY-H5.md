@@ -64,6 +64,8 @@ VITE_MOBILE_H5_URL=https://orangeloveart.cn/m/
 
 与 PC / 后端仓库可共用同一套 SSH 密钥。
 
+**若 CI 报 `uni: not found` 或 `npm ci` 失败**：多为 `package-lock.json` 指向内网 npm（`repo.wuxingdev.cn`）。workflow 已在 CI 使用公网 `registry.npmjs.org` 安装；本地仍可用内网源，互不影响。
+
 ## 6. 上线自测
 
 - [ ] https://orangeloveart.cn/m/ 可打开登录页
