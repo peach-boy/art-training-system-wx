@@ -63,9 +63,9 @@ jobs:
             dist/build/h5/ "${SSH_USER}@${SSH_HOST}:/opt/art-training/mobile-h5/"
 
           scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes \
-            scripts/fix-nginx-m-h5.sh scripts/verify-m-h5-remote.sh \
+            scripts/fix-nginx-m-h5.sh scripts/verify-m-h5-remote.sh scripts/diagnose-m-h5.sh \
             "${SSH_USER}@${SSH_HOST}:/tmp/"
-          $SSH "sudo bash /tmp/fix-nginx-m-h5.sh && sudo bash /tmp/verify-m-h5-remote.sh"
+          $SSH "sudo H5_PUBLIC_HOST=${H5_PUBLIC_HOST} bash /tmp/fix-nginx-m-h5.sh"
 
           echo "========== 服务器本机 HTTPS 校验（Host: ${H5_PUBLIC_HOST}）=========="
           HTML=$($SSH "curl -sSk -H 'Host: ${H5_PUBLIC_HOST}' 'https://127.0.0.1/m/'" | head -25)

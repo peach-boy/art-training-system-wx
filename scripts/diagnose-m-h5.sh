@@ -18,8 +18,15 @@ echo
 ls -la "$MOBILE" 2>/dev/null | head -8 || true
 echo
 
-echo "========== 2. PC www 是否误放了 /m =========="
-ls -la /opt/art-training/www/m 2>/dev/null && echo ">>> 存在 www/m，可能干扰（可备份后删除）" || echo "无 www/m 目录"
+echo "========== 2. www/m 软链 =========="
+ls -la /opt/art-training/www/m 2>/dev/null || echo "无 www/m"
+if [ -L /opt/art-training/www/m ]; then
+  readlink -f /opt/art-training/www/m || true
+fi
+if [ -d /opt/art-training/www/m ] && [ ! -L /opt/art-training/www/m ]; then
+  head -6 /opt/art-training/www/m/index.html 2>/dev/null || true
+  echo ">>> 问题 B: www/m 是实体目录（常为 PC 副本），fix 脚本会备份并改为软链"
+fi
 echo
 
 echo "========== 3. Nginx 是否包含 /m/ location =========="
