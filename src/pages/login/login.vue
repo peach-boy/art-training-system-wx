@@ -12,30 +12,38 @@
         <view class="field">
           <text class="field-label">账号</text>
           <input
-            v-model="account"
             class="field-input"
+            type="text"
+            :value="account"
             placeholder="手机号或管理员用户名"
             placeholder-class="field-ph"
+            :adjust-position="true"
+            @input="account = inputEventValue($event)"
           />
         </view>
         <view class="field">
           <text class="field-label">密码</text>
           <input
-            v-model="password"
             class="field-input"
             password
+            :value="password"
             placeholder="请输入密码"
             placeholder-class="field-ph"
+            :adjust-position="true"
+            @input="password = inputEventValue($event)"
           />
         </view>
 
         <view v-if="needCaptcha" class="field field-captcha">
           <text class="field-label">验证码</text>
           <input
-            v-model="captchaCode"
             class="field-input"
+            type="text"
+            :value="captchaCode"
             placeholder="请输入验证码"
             placeholder-class="field-ph"
+            :adjust-position="true"
+            @input="captchaCode = inputEventValue($event)"
           />
           <view class="captcha-box" @tap="loadCaptcha">
             <image
@@ -67,6 +75,7 @@ import { authAPI } from '@/api'
 import { PHONE_PATTERN, ICP_NUMBER } from '@/utils/config'
 import { useUserStore, navigateAfterLogin } from '@/stores/user'
 import { isLoggedIn } from '@/utils/storage'
+import { inputEventValue } from '@/utils/input'
 
 const userStore = useUserStore()
 

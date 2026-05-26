@@ -1,0 +1,67 @@
+/**
+ * uni-app H5：修复全局 user-select:none、uni-input 高度过小导致无法聚焦/无法输入
+ */
+/* #ifdef H5 */
+input,
+textarea,
+uni-input,
+uni-textarea,
+.uni-input-input,
+.uni-textarea-textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
+
+.uni-input-placeholder,
+.uni-textarea-placeholder {
+  pointer-events: none !important;
+}
+
+uni-input,
+uni-textarea {
+  height: auto !important;
+  min-height: 44px;
+  overflow: visible !important;
+  display: block !important;
+}
+
+uni-input .uni-input-wrapper,
+uni-textarea .uni-textarea-wrapper {
+  min-height: 44px;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+uni-input .uni-input-input,
+uni-textarea .uni-textarea-textarea {
+  position: relative !important;
+  min-height: 44px;
+  height: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* 业务侧给 input 设的 class 落在 uni-input 宿主上 */
+uni-input.field-input,
+uni-input.input,
+uni-textarea.textarea {
+  min-height: 88rpx;
+}
+
+uni-input.field-input .uni-input-input,
+uni-input.input .uni-input-input {
+  min-height: 88rpx;
+  font-size: 28rpx;
+}
+
+uni-textarea.textarea {
+  min-height: 140rpx;
+}
+
+uni-textarea.textarea .uni-textarea-textarea {
+  min-height: 140rpx;
+}
+
+/* #endif */

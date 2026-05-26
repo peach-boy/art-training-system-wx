@@ -14,6 +14,7 @@ onLaunch(() => {
 
 <style lang="scss">
 @import '@/styles/theme.scss';
+@import '@/styles/h5-input-fix.scss';
 
 page {
   background-color: var(--bg-page);
