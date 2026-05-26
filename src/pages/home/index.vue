@@ -1,14 +1,16 @@
 <template>
-  <PageShell title="首页" :tab-bar="true" tab-active="home">
-    <StoreSwitcher />
-
-    <view v-if="showWelcome" class="welcome card">
-      <view class="welcome__avatar">{{ avatarText }}</view>
-      <view class="welcome__text">
-        <text class="welcome__name">{{ userStore.displayName }}</text>
-        <text v-if="roleLabel" class="welcome__role">{{ roleLabel }}</text>
+  <PageShell :title="pageTitle" :tab-bar="true" tab-active="home">
+    <view class="identity card" :class="'identity--' + roleDisplay.badgeTheme">
+      <view class="identity__badge">{{ roleDisplay.primaryLabel }}</view>
+      <view class="identity__main">
+        <text class="identity__workspace">{{ roleDisplay.workspaceTitle }}</text>
+        <text class="identity__sub">{{ roleDisplay.subLabel }} · {{ userStore.displayName }}</text>
+        <text class="identity__desc">{{ roleDisplay.workspaceDesc }}</text>
       </view>
+      <view class="identity__avatar">{{ avatarText }}</view>
     </view>
+
+    <StoreSwitcher v-if="userStore.isAdmin" />
 
     <view v-if="statsLoading" class="stats-loading card">数据加载中…</view>
 
@@ -38,8 +40,12 @@
       </view>
     </view>
 
+    <view v-if="userStore.isPrivilegedAdmin && !statsLoading" class="admin-hint card">
+      <text>当前为超级管理员。门店统计与财务报表请登录 PC 后台查看。</text>
+    </view>
+
     <view class="quick card">
-      <text class="section-title">快捷操作</text>
+      <text class="section-title">{{ quickSectionTitle }}</text>
       <view class="quick-grid">
         <view class="quick-item" @tap="goRecord">
           <text class="quick-item__icon">+</text>
@@ -70,6 +76,7 @@ import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { attendanceAPI, dashboardAPI } from '@/api'
+import { getRoleDisplay } from '@/utils/role'
 
 function weekRange() {
   const now = new Date()
@@ -106,23 +113,20 @@ function resetStatsPlaceholder() {
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1))
 
-/** 系统管理员（超管）移动端首页不展示用户信息卡片 */
-const showWelcome = computed(() => !userStore.isPrivilegedAdmin)
+const roleDisplay = computed(() => getRoleDisplay(userStore.role))
 
-/** 仅普通/财务管理员展示工作台统计；超管请用 PC 端 */
+const pageTitle = computed(() =>
+  roleDisplay.value.isTeacher ? '教师首页' : '管理首页'
+)
+
+const quickSectionTitle = computed(() =>
+  roleDisplay.value.isTeacher ? '教师快捷操作' : '管理快捷操作'
+)
+
+/** 普通/财务管理员展示门店统计；超管移动端不拉统计 */
 const showAdminStats = computed(
   () => userStore.isAdmin && !userStore.isPrivilegedAdmin
 )
-
-const roleLabel = computed(() => {
-  if (userStore.isPrivilegedAdmin) return ''
-  const map = {
-    teacher: '教师',
-    finance_admin: '财务管理员',
-    admin: '管理员'
-  }
-  return map[userStore.role] || ''
-})
 
 onShow(() => {
   if (!requireLogin()) return
@@ -199,37 +203,97 @@ function goCost() {
   margin-bottom: 24rpx;
 }
 
-.welcome {
+.identity {
   display: flex;
-  align-items: center;
-  gap: 24rpx;
+  align-items: flex-start;
+  gap: 20rpx;
+  position: relative;
+  overflow: hidden;
 }
 
-.welcome__avatar {
-  width: 88rpx;
-  height: 88rpx;
+.identity--teacher {
+  background: linear-gradient(135deg, #fff4eb 0%, #fff 55%);
+  border-color: rgba(243, 112, 33, 0.25);
+}
+
+.identity--admin {
+  background: linear-gradient(135deg, #eef4ff 0%, #fff 55%);
+  border-color: rgba(47, 84, 235, 0.2);
+}
+
+.identity__badge {
+  flex-shrink: 0;
+  padding: 8rpx 18rpx;
+  border-radius: var(--radius-full);
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.identity--teacher .identity__badge {
+  background: linear-gradient(135deg, #f37021, #ff8534);
+}
+
+.identity--admin .identity__badge {
+  background: linear-gradient(135deg, #2f54eb, #597ef7);
+}
+
+.identity__main {
+  flex: 1;
+  min-width: 0;
+  padding-right: 72rpx;
+}
+
+.identity__workspace {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-ink);
+}
+
+.identity__sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.identity__desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.identity__avatar {
+  position: absolute;
+  right: 28rpx;
+  top: 28rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
-  background: var(--primary-light);
+  background: rgba(255, 255, 255, 0.85);
   color: var(--primary);
-  font-size: 36rpx;
+  font-size: 30rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1rpx solid var(--hairline);
 }
 
-.welcome__name {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 600;
-  color: var(--text-ink);
+.identity--admin .identity__avatar {
+  color: #2f54eb;
 }
 
-.welcome__role {
-  display: block;
-  margin-top: 6rpx;
+.admin-hint {
+  padding: 24rpx 28rpx;
   font-size: 24rpx;
-  color: var(--text-muted);
+  line-height: 1.5;
+  color: #ad6800;
+  background: #fffbe6;
+  border-color: #ffe58f;
 }
 
 .stats-loading {

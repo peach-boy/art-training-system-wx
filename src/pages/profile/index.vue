@@ -21,19 +21,17 @@ import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
+import { getRoleDisplay } from '@/utils/role'
 
 const userStore = useUserStore()
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1))
 
+const roleDisplay = computed(() => getRoleDisplay(userStore.role))
+
 const roleLabel = computed(() => {
-  const map = {
-    teacher: '教师',
-    super_admin: '超级管理员',
-    finance_admin: '财务管理员',
-    admin: '管理员'
-  }
-  return map[userStore.role] || ''
+  const d = roleDisplay.value
+  return `${d.primaryLabel} · ${d.subLabel}`
 })
 
 onShow(() => {
