@@ -71,7 +71,7 @@ VITE_MOBILE_H5_URL=https://orangeloveart.cn/m/
 
 **不配置也能上线**：本机 `npm run build:h5` 后 `rsync` 到服务器即可。
 
-若用 CI：本仓库 `.github/workflows/deploy-h5.yml`（仅手动触发），在 GitHub → Settings → Secrets 配置：
+若用 CI：本仓库 `.github/workflows/deploy-h5.yml`（**推送到 `main` 且改动在 `src/` 等路径时自动部署**；也可在 Actions 页手动 Run workflow）。在 GitHub → Settings → Secrets 配置：
 
 | Secret | 说明 | 示例 |
 |--------|------|------|
