@@ -9,11 +9,30 @@
       </view>
       <view class="field">
         <text class="label">项目名称 *</text>
-        <input v-model="name" class="input" placeholder="如：办公用品、物料采购" />
+        <input
+          class="input"
+          type="text"
+          :value="name"
+          placeholder="如：办公用品、物料采购"
+          :adjust-position="true"
+          :cursor-spacing="80"
+          @input="onNameInput"
+          @focus="onInputFocus"
+        />
       </view>
       <view class="field">
         <text class="label">金额（元） *</text>
-        <input v-model="amount" class="input" type="digit" placeholder="请输入金额" />
+        <input
+          class="input"
+          type="text"
+          inputmode="decimal"
+          :value="amount"
+          placeholder="请输入金额"
+          :adjust-position="true"
+          :cursor-spacing="80"
+          @input="onAmountInput"
+          @focus="onInputFocus"
+        />
       </view>
       <view class="field">
         <text class="label">记账日期 *</text>
@@ -23,7 +42,15 @@
       </view>
       <view class="field">
         <text class="label">备注</text>
-        <textarea v-model="notes" class="textarea" placeholder="备注（可选）" />
+        <textarea
+          class="textarea"
+          :value="notes"
+          placeholder="备注（可选）"
+          :adjust-position="true"
+          :cursor-spacing="80"
+          @input="onNotesInput"
+          @focus="onInputFocus"
+        />
       </view>
     </view>
 
@@ -32,7 +59,11 @@
     </view>
 
     <view class="footer">
-      <button class="btn-save" :loading="submitting" @tap="handleSave">保存</button>
+      <view
+        class="btn-save"
+        :class="{ 'btn-save--disabled': submitting }"
+        @tap="handleSave"
+      >{{ submitting ? '保存中…' : '保存' }}</view>
     </view>
   </view>
 </template>
@@ -42,6 +73,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { financialEntryAPI } from '@/api'
 import { requireLogin, useUserStore } from '@/stores/user'
+import { inputEventValue } from '@/utils/input'
 import {
   isAllStores,
   formTouchesFixedCost,
@@ -69,6 +101,32 @@ const categoryIndex = computed(() => {
   const idx = categories.value.indexOf(category.value)
   return idx >= 0 ? idx : 0
 })
+
+function onNameInput(e) {
+  name.value = inputEventValue(e)
+}
+
+function onAmountInput(e) {
+  const raw = inputEventValue(e)
+  amount.value = raw.replace(/[^\d.]/g, '')
+}
+
+function onNotesInput(e) {
+  notes.value = inputEventValue(e)
+}
+
+/** H5 部分机型需主动 scroll，避免键盘挡住输入框 */
+function onInputFocus() {
+  // #ifdef H5
+  setTimeout(() => {
+    try {
+      uni.pageScrollTo({ scrollTop: 9999, duration: 0 })
+    } catch (e) {
+      /* ignore */
+    }
+  }, 200)
+  // #endif
+}
 
 onLoad(async (query) => {
   if (!requireLogin()) return
@@ -125,7 +183,7 @@ function onDateChange(e) {
 
 function validate() {
   if (isAllStores()) {
-    uni.showToast({ title: '请先在「我的」选择店铺', icon: 'none' })
+    uni.showToast({ title: '请先在首页选择店铺', icon: 'none' })
     return false
   }
   if (!userStore.isPrivilegedAdmin && formTouchesFixedCost(category.value, name.value)) {
@@ -206,7 +264,8 @@ function handleDelete() {
 .form-page {
   min-height: 100vh;
   background: var(--bg-page);
-  padding: 24rpx 24rpx calc(140rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 24rpx calc(160rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
 .form-card {
@@ -214,11 +273,15 @@ function handleDelete() {
   border-radius: var(--radius-md);
   border: 1rpx solid var(--hairline);
   padding: 8rpx 24rpx 24rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .field {
   padding: 20rpx 0;
   border-bottom: 1rpx solid var(--hairline);
+  position: relative;
+  z-index: 1;
 }
 
 .field:last-child {
@@ -242,6 +305,12 @@ function handleDelete() {
   border-radius: var(--radius-sm);
   padding: 20rpx 24rpx;
   font-size: 28rpx;
+  color: var(--text-ink);
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .picker-val.placeholder {
@@ -250,10 +319,13 @@ function handleDelete() {
 
 .textarea {
   min-height: 140rpx;
+  display: block;
 }
 
 .danger-zone {
   margin-top: 32rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-delete {
@@ -262,19 +334,28 @@ function handleDelete() {
   font-size: 28rpx;
 }
 
+.btn-delete::after {
+  border: none;
+}
+
 .footer {
-  position: fixed;
-  left: 24rpx;
-  right: 24rpx;
-  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  margin-top: 32rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-save {
   height: 88rpx;
   line-height: 88rpx;
+  text-align: center;
   border-radius: 44rpx;
   background: var(--primary);
   color: #fff;
   font-size: 30rpx;
+}
+
+.btn-save--disabled {
+  opacity: 0.65;
+  pointer-events: none;
 }
 </style>

@@ -12,7 +12,7 @@
     </view>
 
     <view v-if="isAllStores()" class="store-warn">
-      请先在「我的」中选择具体店铺后再录入成本
+      请先在首页选择具体店铺后再录入成本
     </view>
 
     <view v-if="loading" class="empty">加载中...</view>
@@ -112,7 +112,7 @@ function nextMonth() {
 
 function goAdd() {
   if (isAllStores()) {
-    uni.showToast({ title: '请选择店铺', icon: 'none' })
+    uni.showToast({ title: '请先在首页选择店铺', icon: 'none' })
     return
   }
   uni.navigateTo({

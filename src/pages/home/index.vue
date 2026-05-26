@@ -1,5 +1,7 @@
 <template>
   <PageShell title="首页" :tab-bar="true" tab-active="home">
+    <StoreSwitcher @change="onStoreChange" />
+
     <view v-if="showWelcome" class="welcome card">
       <view class="welcome__avatar">{{ avatarText }}</view>
       <view class="welcome__text">
@@ -62,6 +64,7 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
+import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { attendanceAPI, dashboardAPI } from '@/api'
 
@@ -111,6 +114,10 @@ onShow(() => {
   if (!requireLogin()) return
   loadStats()
 })
+
+function onStoreChange() {
+  loadStats()
+}
 
 async function loadStats() {
   if (userStore.isTeacher) {

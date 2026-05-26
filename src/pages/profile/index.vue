@@ -9,13 +9,6 @@
       </view>
     </view>
 
-    <view v-if="userStore.isAdmin && stores.length" class="card">
-      <text class="section-title">当前店铺</text>
-      <picker :range="storeNames" :value="storeIndex" @change="onStoreChange">
-        <view class="store-picker">{{ currentStoreName || '选择店铺' }}</view>
-      </picker>
-    </view>
-
     <view class="actions card">
       <button class="action-btn" @tap="goHome">返回首页</button>
       <button class="action-btn action-btn--danger" @tap="onLogout">退出登录</button>
@@ -24,16 +17,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
-import { storeAPI } from '@/api'
-import { getCurrentStoreId, setCurrentStoreId } from '@/utils/storage'
 
 const userStore = useUserStore()
-const stores = ref([])
-const storeIndex = ref(0)
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1))
 
@@ -47,38 +36,9 @@ const roleLabel = computed(() => {
   return map[userStore.role] || ''
 })
 
-const storeNames = computed(() => stores.value.map((s) => s.storeName || s.name))
-
-const currentStoreName = computed(() => {
-  const id = getCurrentStoreId()
-  const found = stores.value.find((s) => String(s.storeId) === String(id))
-  return found?.storeName || found?.name || ''
-})
-
-onShow(async () => {
+onShow(() => {
   if (!requireLogin()) return
-  if (userStore.isAdmin) {
-    try {
-      stores.value = (await storeAPI.getList()) || []
-      const cur = getCurrentStoreId()
-      const idx = stores.value.findIndex((s) => String(s.storeId) === String(cur))
-      storeIndex.value = idx >= 0 ? idx : 0
-    } catch (e) {
-      stores.value = []
-    }
-  }
 })
-
-function onStoreChange(e) {
-  const idx = Number(e.detail.value)
-  storeIndex.value = idx
-  const s = stores.value[idx]
-  if (s?.storeId != null) {
-    setCurrentStoreId(s.storeId)
-    userStore.switchStore(s.storeId)
-    uni.showToast({ title: '已切换店铺', icon: 'success' })
-  }
-}
 
 function goHome() {
   uni.reLaunch({ url: '/pages/home/index' })
@@ -137,20 +97,6 @@ function onLogout() {
   margin-top: 8rpx;
   font-size: 24rpx;
   color: var(--text-muted);
-}
-
-.section-title {
-  display: block;
-  font-size: 26rpx;
-  color: var(--text-muted);
-  margin-bottom: 16rpx;
-}
-
-.store-picker {
-  padding: 20rpx;
-  background: var(--bg-page);
-  border-radius: var(--radius-sm);
-  font-size: 28rpx;
 }
 
 .action-btn {
