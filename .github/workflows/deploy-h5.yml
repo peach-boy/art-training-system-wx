@@ -38,8 +38,27 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes "${SSH_USER}@${SSH_HOST}" \
-            "mkdir -p /opt/art-training/mobile-h5"
+          SSH="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes ${SSH_USER}@${SSH_HOST}"
+
+          test -f dist/build/h5/index.html
+          if grep -q 'ART-CMS' dist/build/h5/index.html; then
+            echo "FAIL: 构建产物像 PC 包，请确认 UNI_PLATFORM=h5"
+            exit 1
+          fi
+
+          $SSH "mkdir -p /opt/art-training/mobile-h5"
           rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes" \
             dist/build/h5/ "${SSH_USER}@${SSH_HOST}:/opt/art-training/mobile-h5/"
-          echo "✅ H5: https://orangeloveart.cn/m/"
+
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes \
+            scripts/fix-nginx-m-h5.sh scripts/verify-m-h5-remote.sh \
+            "${SSH_USER}@${SSH_HOST}:/tmp/"
+          $SSH "sudo bash /tmp/fix-nginx-m-h5.sh && sudo bash /tmp/verify-m-h5-remote.sh"
+
+          HTML=$(curl -fsSL "https://${SSH_HOST}/m/" | head -20)
+          echo "$HTML"
+          echo "$HTML" | grep -q '教务移动' || {
+            echo "FAIL: 公网 /m/ 仍返回 PC 页（ART-CMS），Nginx 未生效"
+            exit 1
+          }
+          echo "✅ H5: https://${SSH_HOST}/m/"

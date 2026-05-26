@@ -26,15 +26,32 @@ UNI_PLATFORM=h5 npm run build:h5
 /opt/art-training/mobile-h5/
 ```
 
-Nginx 需配置（`setup-nginx-https.sh` 已含示例）：
+Nginx **必须**单独指向 `mobile-h5`（hash 路由，**不要** `try_files` 回落到 `/index.html`，否则会落到 PC 的 `www` 导致白屏）：
 
 ```nginx
 location = /m { return 301 /m/; }
+location ^~ /m/assets/ {
+    alias /opt/art-training/mobile-h5/assets/;
+}
 location ^~ /m/ {
     alias /opt/art-training/mobile-h5/;
-    try_files $uri $uri/ /m/index.html;
+    index index.html;
 }
 ```
+
+服务器一键修复（需 sudo）：
+
+```bash
+sudo bash /path/to/art-training-system-wx/scripts/fix-nginx-m-h5.sh
+```
+
+### 白屏 / 标题仍是 ART-CMS
+
+说明 `https://域名/m/` 实际返回的是 **PC 后台** 的 `index.html`（脚本引用 `/assets/...` 而非 `/m/assets/...`）。处理：
+
+1. 确认 `/opt/art-training/mobile-h5/index.html` 标题为「ART 教务移动版」
+2. 执行上面的 `fix-nginx-m-h5.sh` 并 `nginx -t && systemctl reload nginx`
+3. 浏览器无痕打开 `/m/`，登录后地址应为 `.../m/#/pages/home/index`
 
 访问地址：**https://orangeloveart.cn/m/**
 
