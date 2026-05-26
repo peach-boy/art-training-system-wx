@@ -43,6 +43,7 @@ import { onShow, onLoad } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { requireLogin } from '@/stores/user'
 import { useUserStore } from '@/stores/user'
+import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { attendanceAPI } from '@/api'
 
 const userStore = useUserStore()
@@ -75,6 +76,11 @@ onShow(() => {
   if (!requireLogin()) return
   if (!startDate.value) initDates()
   reload()
+})
+
+useStoreRefresh(() => {
+  if (!startDate.value) initDates()
+  return reload()
 })
 
 async function fetchPage(page, append) {

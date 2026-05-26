@@ -126,7 +126,7 @@
             <text>上传课堂照片</text>
             <text class="upload-hint">支持相册或拍照</text>
           </view>
-          <view v-if="uploadingImage" class="upload-loading">上传中...</view>
+          <view v-if="uploadingImage" class="upload-loading">{{ uploadStatusText }}</view>
         </view>
       </view>
     </view>
@@ -160,6 +160,7 @@ import { LESSON_TYPES, dayOfWeekFromDate } from '@/utils/lessonType'
 import { formatStudentLabel } from '@/utils/format'
 import { imageFullUrl } from '@/utils/media'
 import { uploadLessonImage } from '@/utils/upload'
+import { prepareImageForUpload } from '@/utils/imageCompress'
 import { requireLogin, useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -203,6 +204,7 @@ const submitting = ref(false)
 const imageUrl = ref('')
 const imagePreview = ref('')
 const uploadingImage = ref(false)
+const uploadStatusText = ref('')
 
 let searchTimer = null
 
@@ -423,30 +425,18 @@ function chooseImage() {
   })
 }
 
-function compressAndUpload(filePath) {
-  // #ifdef MP-WEIXIN
-  uni.compressImage({
-    src: filePath,
-    quality: 80,
-    compressedWidth: 1920,
-    success(res) {
-      uploadImage(res.tempFilePath || filePath)
-    },
-    fail() {
-      uploadImage(filePath)
-    }
-  })
-  // #endif
-  // #ifndef MP-WEIXIN
-  uploadImage(filePath)
-  // #endif
-}
-
-async function uploadImage(filePath) {
+async function compressAndUpload(filePath) {
+  if (uploadingImage.value) return
   uploadingImage.value = true
+  uploadStatusText.value = '压缩中…'
   imagePreview.value = filePath
   try {
-    const url = await uploadLessonImage(filePath)
+    const prepared = await prepareImageForUpload(filePath, {
+      maxLongEdge: 1280,
+      jpegQuality: 0.78
+    })
+    uploadStatusText.value = '上传中…'
+    const url = await uploadLessonImage(prepared)
     imageUrl.value = url
     imagePreview.value = imageFullUrl(url)
     uni.showToast({ title: '上传成功', icon: 'success' })
@@ -456,6 +446,7 @@ async function uploadImage(filePath) {
     uni.showToast({ title: e.message || '上传失败', icon: 'none' })
   } finally {
     uploadingImage.value = false
+    uploadStatusText.value = ''
   }
 }
 

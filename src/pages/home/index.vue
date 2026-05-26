@@ -1,6 +1,6 @@
 <template>
   <PageShell title="首页" :tab-bar="true" tab-active="home">
-    <StoreSwitcher @change="onStoreChange" />
+    <StoreSwitcher />
 
     <view v-if="showWelcome" class="welcome card">
       <view class="welcome__avatar">{{ avatarText }}</view>
@@ -10,7 +10,9 @@
       </view>
     </view>
 
-    <view v-if="userStore.isTeacher" class="stats-row">
+    <view v-if="statsLoading" class="stats-loading card">数据加载中…</view>
+
+    <view v-else-if="userStore.isTeacher" class="stats-row">
       <view class="stat card">
         <text class="stat__value">{{ monthClassHours }}</text>
         <text class="stat__label">本月课时</text>
@@ -21,7 +23,7 @@
       </view>
     </view>
 
-    <view v-else-if="showAdminStats" class="stats-row">
+    <view v-else-if="!statsLoading && showAdminStats" class="stats-row">
       <view class="stat card">
         <text class="stat__value">{{ adminStats.totalCount }}</text>
         <text class="stat__label">本周课时</text>
@@ -66,6 +68,7 @@ import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
+import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { attendanceAPI, dashboardAPI } from '@/api'
 
 function weekRange() {
@@ -82,6 +85,7 @@ function weekRange() {
 
 const userStore = useUserStore()
 
+const statsLoading = ref(false)
 const monthClassHours = ref('-')
 const recordTotal = ref('-')
 const adminStats = ref({
@@ -89,6 +93,16 @@ const adminStats = ref({
   distinctStudents: '-',
   feeOverdue: '-'
 })
+
+function resetStatsPlaceholder() {
+  monthClassHours.value = '-'
+  recordTotal.value = '-'
+  adminStats.value = {
+    totalCount: '-',
+    distinctStudents: '-',
+    feeOverdue: '-'
+  }
+}
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1))
 
@@ -115,43 +129,47 @@ onShow(() => {
   loadStats()
 })
 
-function onStoreChange() {
-  loadStats()
-}
+useStoreRefresh(() => loadStats())
 
 async function loadStats() {
-  if (userStore.isTeacher) {
-    try {
-      const [summary, pageData] = await Promise.all([
-        attendanceAPI.getMonthlySummary(),
-        attendanceAPI.getPage({ current: 1, size: 1 })
-      ])
-      monthClassHours.value =
-        summary?.classHoursTotal != null ? String(summary.classHoursTotal) : '0'
-      recordTotal.value = pageData?.total != null ? String(pageData.total) : '0'
-    } catch (e) {
-      monthClassHours.value = '-'
-      recordTotal.value = '-'
-    }
-    return
-  }
-
-  if (showAdminStats.value) {
-    try {
-      const { start, end } = weekRange()
-      const [stats, counts] = await Promise.all([
-        dashboardAPI.getStats(start, end),
-        dashboardAPI.getStudentCounts()
-      ])
-      const rows = stats?.rows || []
-      adminStats.value = {
-        totalCount: rows.reduce((s, r) => s + Number(r.count || 0), 0),
-        distinctStudents: stats?.distinctStudents ?? '-',
-        feeOverdue: counts?.feeOverdue ?? '-'
+  statsLoading.value = true
+  resetStatsPlaceholder()
+  try {
+    if (userStore.isTeacher) {
+      try {
+        const [summary, pageData] = await Promise.all([
+          attendanceAPI.getMonthlySummary(),
+          attendanceAPI.getPage({ current: 1, size: 1 })
+        ])
+        monthClassHours.value =
+          summary?.classHoursTotal != null ? String(summary.classHoursTotal) : '0'
+        recordTotal.value = pageData?.total != null ? String(pageData.total) : '0'
+      } catch (e) {
+        monthClassHours.value = '-'
+        recordTotal.value = '-'
       }
-    } catch (e) {
-      adminStats.value = { totalCount: '-', distinctStudents: '-', feeOverdue: '-' }
+      return
     }
+
+    if (showAdminStats.value) {
+      try {
+        const { start, end } = weekRange()
+        const [stats, counts] = await Promise.all([
+          dashboardAPI.getStats(start, end),
+          dashboardAPI.getStudentCounts()
+        ])
+        const rows = stats?.rows || []
+        adminStats.value = {
+          totalCount: rows.reduce((s, r) => s + Number(r.count || 0), 0),
+          distinctStudents: stats?.distinctStudents ?? '-',
+          feeOverdue: counts?.feeOverdue ?? '-'
+        }
+      } catch (e) {
+        adminStats.value = { totalCount: '-', distinctStudents: '-', feeOverdue: '-' }
+      }
+    }
+  } finally {
+    statsLoading.value = false
   }
 }
 
@@ -212,6 +230,14 @@ function goCost() {
   margin-top: 6rpx;
   font-size: 24rpx;
   color: var(--text-muted);
+}
+
+.stats-loading {
+  text-align: center;
+  padding: 32rpx;
+  font-size: 26rpx;
+  color: var(--text-muted);
+  margin-bottom: 24rpx;
 }
 
 .stats-row {

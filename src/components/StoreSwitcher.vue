@@ -17,8 +17,6 @@ import { useUserStore } from '@/stores/user'
 import { storeAPI } from '@/api'
 import { getCurrentStoreId, setCurrentStoreId } from '@/utils/storage'
 
-const emit = defineEmits(['change'])
-
 const userStore = useUserStore()
 const stores = ref([])
 const storeIndex = ref(0)
@@ -28,7 +26,7 @@ const show = computed(() => userStore.isAdmin && stores.value.length > 0)
 const storeNames = computed(() => stores.value.map((s) => s.storeName || s.name))
 
 const currentStoreName = computed(() => {
-  const id = getCurrentStoreId()
+  const id = userStore.currentStoreId || getCurrentStoreId()
   const found = stores.value.find((s) => String(s.storeId) === String(id))
   return found?.storeName || found?.name || storeNames.value[0] || ''
 })
@@ -51,6 +49,7 @@ async function loadStores() {
       }
     }
     storeIndex.value = idx >= 0 ? idx : 0
+    userStore.currentStoreId = getCurrentStoreId()
   } catch (e) {
     stores.value = []
   }
@@ -68,7 +67,6 @@ function onStoreChange(e) {
     setCurrentStoreId(s.storeId)
     userStore.switchStore(s.storeId)
     uni.showToast({ title: '已切换店铺', icon: 'success' })
-    emit('change', s.storeId)
   }
 }
 

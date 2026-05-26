@@ -6,15 +6,20 @@ import {
   setToken,
   getUserInfo,
   setUserInfo,
+  getCurrentStoreId,
   setCurrentStoreId,
   clearAuth,
   isLoggedIn as storageIsLoggedIn
 } from '@/utils/storage'
+import { notifyStoreChanged } from '@/utils/storeEvents'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: getToken(),
-    userInfo: getUserInfo()
+    userInfo: getUserInfo(),
+    /** 与 storage 同步，供页面 watch 店铺变更 */
+    currentStoreId: getCurrentStoreId(),
+    storeRevision: 0
   }),
 
   getters: {
@@ -49,8 +54,10 @@ export const useUserStore = defineStore('user', {
       setUserInfo(info)
       if (data.storeId != null) {
         setCurrentStoreId(data.storeId)
+        this.currentStoreId = String(data.storeId)
       } else if (info.allowedStoreIds?.length) {
         setCurrentStoreId(info.allowedStoreIds[0])
+        this.currentStoreId = String(info.allowedStoreIds[0])
       }
     },
 
@@ -80,7 +87,13 @@ export const useUserStore = defineStore('user', {
     },
 
     switchStore(storeId) {
+      const id = storeId != null ? String(storeId) : ''
       setCurrentStoreId(storeId)
+      if (this.currentStoreId !== id) {
+        this.currentStoreId = id
+        this.storeRevision += 1
+        notifyStoreChanged(storeId)
+      }
     }
   }
 })

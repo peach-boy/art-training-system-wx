@@ -47,6 +47,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { financialEntryAPI } from '@/api'
 import { requireLogin, useUserStore } from '@/stores/user'
+import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import {
   isAllStores,
   filterCostListForRole,
@@ -77,6 +78,8 @@ onShow(() => {
   }
   loadList()
 })
+
+useStoreRefresh(() => loadList())
 
 async function loadList() {
   loading.value = true

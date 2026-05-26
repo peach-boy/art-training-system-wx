@@ -42,6 +42,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
+import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { studentAPI } from '@/api'
 
 const userStore = useUserStore()
@@ -63,6 +64,8 @@ onShow(() => {
   }
   reload()
 })
+
+useStoreRefresh(() => reload())
 
 function feeLabel(s) {
   const map = { overdue: '待续费', warning: '预警', normal: '正常', not_started: '未开始' }
