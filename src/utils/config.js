@@ -1,5 +1,6 @@
 /** API 与环境配置 */
-/** 上线 H5 须为 false；本地开发改为 true */
+/** false = 生产 API（小程序开发者工具联调推荐，无需本地后端） */
+/** true  = 本地 http://127.0.0.1:8081/api（需启动后端 dev-local-wechat.sh） */
 const USE_LOCAL = false
 const LOCAL_BASE = 'http://127.0.0.1:8081/api'
 const PROD_BASE = 'https://orangeloveart.cn/api'

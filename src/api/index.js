@@ -7,6 +7,10 @@ export const authAPI = {
   mobileLogin(data) {
     return request({ url: '/auth/mobile/login', method: 'POST', data })
   },
+  /** 小程序：loginCode 必填；首次或未绑定 openid 时传 phoneCode（getPhoneNumber） */
+  wechatMiniProgramLogin(data) {
+    return request({ url: '/auth/wechat/miniprogram/login', method: 'POST', data })
+  },
   getCurrentUser() {
     return request({ url: '/auth/current', method: 'GET' })
   },
