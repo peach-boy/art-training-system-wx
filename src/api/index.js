@@ -57,10 +57,12 @@ export const attendanceAPI = {
         current: params.current || 1,
         size: params.size || 10,
         studentId: params.studentId,
+        packageId: params.packageId,
         startDate: params.startDate,
         endDate: params.endDate,
         sortBy: params.sortBy || 'classDate',
-        teacherId: params.teacherId
+        teacherId: params.teacherId,
+        includeCareEvening: params.includeCareEvening
       }
     })
   },
@@ -120,7 +122,8 @@ export async function fetchPackageAttendanceRecords(packageId) {
       current: page,
       size: pageSize,
       packageId,
-      sortBy: 'classDateAsc'
+      sortBy: 'classDateAsc',
+      includeCareEvening: true
     })
     const batch = data?.records || data?.content || []
     if (total === null) total = Number(data?.total ?? data?.totalElements ?? batch.length)
