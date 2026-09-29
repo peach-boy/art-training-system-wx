@@ -48,7 +48,14 @@
           </view>
           <view class="chips">
             <text class="chip">{{ lessonLabel(item.lessonType) }}</text>
+            <text v-if="item.teacherName" class="chip chip--muted">{{ item.teacherName }} 老师</text>
             <text v-if="item.packageName" class="chip chip--muted">{{ item.packageName }}</text>
+          </view>
+          <text v-if="item.coursewareName" class="note">课件：{{ item.coursewareName }}</text>
+          <text v-if="item.notes" class="note">备注：{{ item.notes }}</text>
+          <view v-if="photoOf(item)" class="photo-wrap" @tap="previewPhoto(item)">
+            <image class="photo" :src="photoOf(item)" mode="aspectFill" lazy-load />
+            <text class="photo-tip">课堂照片 · 点击查看</text>
           </view>
         </view>
       </view>
@@ -63,6 +70,7 @@ import { authAPI } from '@/api'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { formatClassHours } from '@/utils/classHours'
 import { labelOf } from '@/utils/lessonType'
+import { imageFullUrl } from '@/utils/media'
 
 const userStore = useUserStore()
 const studentName = ref('')
@@ -87,6 +95,17 @@ function hours(value) {
 
 function lessonLabel(type) {
   return labelOf(type)
+}
+
+function photoOf(item) {
+  return imageFullUrl(item.imageUrl)
+}
+
+function previewPhoto(item) {
+  const current = photoOf(item)
+  if (!current) return
+  const urls = records.value.map(photoOf).filter(Boolean)
+  uni.previewImage({ current, urls })
 }
 
 function percent(pkg) {
@@ -317,6 +336,39 @@ $green: #16a34a;
 .chip--muted {
   color: $muted;
   background: #f1ece6;
+}
+
+.note {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: $muted;
+}
+
+.photo-wrap {
+  position: relative;
+  margin-top: 18rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+  background: #f1ece6;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 360rpx;
+}
+
+.photo-tip {
+  position: absolute;
+  left: 16rpx;
+  bottom: 16rpx;
+  padding: 4rpx 16rpx;
+  font-size: 21rpx;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 999rpx;
 }
 
 .empty {
