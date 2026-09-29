@@ -78,12 +78,12 @@ export const useUserStore = defineStore('user', {
     },
 
     async logout() {
+      this.clearAuth()
       try {
         await authAPI.logout()
       } catch (e) {
-        // ignore
+        // 本地已退出，服务端失败不影响
       }
-      this.clearAuth()
     },
 
     switchStore(storeId) {

@@ -1,163 +1,213 @@
 <template>
   <view class="page-form">
-    <view class="form-section">
-      <view class="section-head">学员信息</view>
-      <view class="form-card">
-        <view class="field-block">
-          <view class="field-label">学员 *</view>
-          <view v-if="userStore.isAdmin" class="scope-row">
-            <view
-              class="scope-chip"
-              :class="{ active: studentScope === 'mine' }"
-              @tap="onStudentScopeChange('mine')"
-            >我的学员</view>
-            <view
-              class="scope-chip"
-              :class="{ active: studentScope === 'all' }"
-              @tap="onStudentScopeChange('all')"
-            >全部学员</view>
+    <scroll-view scroll-y class="form-scroll">
+      <view class="form-inner">
+        <view class="top">
+          <BackBar />
+          <text class="top-title">{{ mode === 'edit' ? '修正课时' : '录入课时' }}</text>
+        </view>
+
+        <!-- 学员 -->
+        <view class="card card--student">
+          <view v-if="studentId && studentLabel" class="picked">
+            <view class="picked-avatar">{{ studentLabel.slice(0, 1) }}</view>
+            <text class="picked-name">{{ studentLabel }}</text>
+            <text class="picked-change" @tap="clearStudentPick">更换</text>
           </view>
-          <view class="search-row">
+          <template v-else>
+            <view class="search">
+              <input
+                v-model="studentKeyword"
+                class="search-input"
+                placeholder="搜索学员：姓名 / 拼音首字母"
+                placeholder-class="search-ph"
+                confirm-type="search"
+                :adjust-position="true"
+                :cursor-spacing="120"
+                @input="onStudentKeywordInput"
+                @confirm="searchStudents"
+              />
+              <view class="search-go" @tap="searchStudents">搜索</view>
+            </view>
+            <view v-if="!studentOptions.length" class="search-tip">支持姓名、小名或拼音首字母，如「zs」</view>
+            <scroll-view v-if="studentOptions.length" scroll-y class="results">
+              <view
+                v-for="opt in studentOptions"
+                :key="opt.value"
+                class="result"
+                hover-class="result--hover"
+                @tap="pickStudent(opt)"
+              >{{ opt.label }}</view>
+            </scroll-view>
+          </template>
+        </view>
+
+        <!-- 课时类型 -->
+        <view class="types">
+          <view
+            v-for="(t, idx) in LESSON_TYPES"
+            :key="t.value"
+            class="type"
+            :class="['type--' + t.value, { active: lessonTypeIndex === idx }]"
+            @tap="setLessonType(idx)"
+          >{{ t.label }}</view>
+        </view>
+
+        <!-- 主要信息 -->
+        <view class="card card--rows">
+          <view
+            v-if="lessonType === 'regular' || lessonType === 'renewal_pending'"
+            class="row row--tap"
+            hover-class="row--hover"
+            @tap="openPackagePicker"
+          >
+            <text class="row-label">课包<text v-if="lessonType === 'regular'" class="req">*</text></text>
+            <text class="row-value" :class="{ ph: !packageLabel }">
+              {{ packageLabel || (packageOptions.length ? '请选择' : studentId ? '该学员暂无可用课包' : '先选学员') }}
+            </text>
+            <text class="row-arrow">›</text>
+          </view>
+
+          <view v-if="lessonType === 'temp'" class="row">
+            <text class="row-label">收入<text class="req">*</text></text>
             <input
-              v-model="studentKeyword"
-              class="input search-input"
-              placeholder="姓名模糊 / 首字母搜索"
-              confirm-type="search"
-              @input="onStudentKeywordInput"
-              @confirm="searchStudents"
+              v-model="income"
+              class="row-input"
+              type="digit"
+              placeholder="请输入金额（元）"
+              :adjust-position="true"
+              :cursor-spacing="120"
             />
-            <button class="btn-ghost search-btn" size="mini" @tap="searchStudents">搜索</button>
           </view>
-          <picker
-            v-if="studentOptions.length"
-            :range="studentOptions"
-            range-key="label"
-            @change="onStudentPick"
-          >
-            <view class="cell-value">{{ studentLabel || '请选择学员' }}</view>
-          </picker>
-          <view v-else class="text-muted tips">输入关键字后搜索学员</view>
-        </view>
-      </view>
-    </view>
 
-    <view class="form-section">
-      <view class="section-head">课程信息</view>
-      <view class="form-card">
-        <view class="cell">
-          <text class="cell-label">课时类型 *</text>
-          <picker :range="lessonTypeLabels" :value="lessonTypeIndex" @change="onLessonTypeChange">
-            <view class="cell-value arrow">{{ lessonTypeLabels[lessonTypeIndex] }}</view>
-          </picker>
-        </view>
-
-        <view v-if="lessonType === 'regular' || lessonType === 'renewal_pending'" class="cell">
-          <text class="cell-label">课包 {{ lessonType === 'regular' ? '*' : '' }}</text>
-          <picker :range="packageOptions" range-key="label" @change="onPackagePick">
-            <view class="cell-value arrow" :class="{ placeholder: !packageLabel }">
-              {{ packageLabel || '请选择课包' }}
-            </view>
-          </picker>
-        </view>
-
-        <view v-if="lessonType === 'temp'" class="field-block inner">
-          <view class="field-label">课时收入（元） *</view>
-          <input v-model="income" class="input" type="digit" placeholder="请输入金额" />
-        </view>
-
-        <view class="cell">
-          <text class="cell-label">课程类型</text>
           <picker :range="courseTypeOptions" range-key="label" @change="onCourseTypePick">
-            <view class="cell-value arrow" :class="{ placeholder: !courseTypeLabel }">
-              {{ courseTypeLabel || '请选择' }}
+            <view class="row row--tap">
+              <text class="row-label">课程类型</text>
+              <text class="row-value" :class="{ ph: !courseTypeLabel }">{{ courseTypeLabel || '请选择' }}</text>
+              <text class="row-arrow">›</text>
             </view>
           </picker>
-        </view>
 
-        <view class="field-block inner">
-          <view class="field-label">课件</view>
-          <picker :range="coursewareOptions" range-key="label" @change="onCoursewarePick">
-            <view class="cell-value" :class="{ placeholder: !coursewareLabel }">
-              {{ coursewareLabel || '可选' }}
-            </view>
-          </picker>
-          <input
-            v-model="customCoursewareName"
-            class="input custom-name"
-            placeholder="或输入自定义课件名"
-            @input="onCustomCoursewareInput"
-          />
-        </view>
-      </view>
-    </view>
+          <view v-if="userStore.isAdmin" class="row-wrap">
+            <picker :range="teacherOptions" range-key="label" @change="onTeacherPick">
+              <view class="row row--tap">
+                <text class="row-label">上课员工<text class="req">*</text></text>
+                <text class="row-value" :class="{ ph: !teacherLabel }">{{ teacherLabel || '请选择' }}</text>
+                <text class="row-arrow">›</text>
+              </view>
+            </picker>
+          </view>
 
-    <view class="form-section">
-      <view class="section-head">上课信息</view>
-      <view class="form-card">
-        <view class="cell">
-          <text class="cell-label">授课老师 *</text>
-          <picker
-            v-if="userStore.isAdmin"
-            :range="teacherOptions"
-            range-key="label"
-            @change="onTeacherPick"
-          >
-            <view class="cell-value arrow" :class="{ placeholder: !teacherLabel }">
-              {{ teacherLabel || '请选择授课老师' }}
-            </view>
-          </picker>
-          <view v-else class="cell-value">{{ selfTeacherName || '当前登录教师' }}</view>
-        </view>
-        <view class="cell">
-          <text class="cell-label">上课日期 *</text>
           <picker mode="date" :value="classDate" @change="onClassDateChange">
-            <view class="cell-value arrow">{{ classDate || '请选择日期' }}</view>
+            <view class="row row--tap">
+              <text class="row-label">上课日期</text>
+              <text class="row-value">{{ classDate }}<text v-if="classDate === today" class="row-tag">今天</text></text>
+              <text class="row-arrow">›</text>
+            </view>
           </picker>
+
+          <view v-if="lessonType !== 'temp'" class="row">
+            <text class="row-label">扣除课时</text>
+            <view class="deduct">
+              <view
+                v-for="d in deductChoices"
+                :key="d.value"
+                class="deduct-chip"
+                :class="{ active: isDeductSelected(d.value) }"
+                @tap="classesDeducted = d.value"
+              >{{ d.label }}</view>
+            </view>
+          </view>
+
+          <!-- 照片：同一行，拍照 / 相册 -->
+          <view class="row row--photo">
+            <text class="row-label">课堂照片</text>
+            <view v-if="imagePreview" class="thumb-wrap">
+              <image class="thumb" :src="imagePreview" mode="aspectFill" @tap="previewImage" />
+              <view v-if="uploadingImage" class="thumb-loading">{{ uploadStatusText }}</view>
+              <view v-else class="thumb-x" @tap.stop="removeImage">×</view>
+            </view>
+            <view v-else class="photo-actions">
+              <view class="photo-btn photo-btn--primary" @tap.stop="pickImage('camera')">拍照</view>
+              <view class="photo-btn" @tap.stop="pickImage('album')">相册</view>
+            </view>
+          </view>
         </view>
-        <view v-if="lessonType !== 'temp'" class="cell">
-          <text class="cell-label">扣除课时</text>
-          <picker :range="deductOptions" @change="onDeductChange">
-            <view class="cell-value arrow">{{ classesDeducted }}</view>
+
+        <!-- 更多：折叠 -->
+        <view class="more-toggle" @tap="showMore = !showMore">
+          <text class="more-text">课件、备注<text v-if="!showMore && moreFilled" class="more-dot">已填</text></text>
+          <text class="more-arrow" :class="{ open: showMore }">›</text>
+        </view>
+        <view v-if="showMore" class="card card--more">
+          <picker :range="coursewareOptions" range-key="label" @change="onCoursewarePick">
+            <view class="row row--tap">
+              <text class="row-label">课件</text>
+              <text class="row-value" :class="{ ph: !coursewareLabel }">{{ coursewareLabel || '从列表选择（可选）' }}</text>
+              <text class="row-arrow">›</text>
+            </view>
           </picker>
-        </view>
-      </view>
-    </view>
-
-    <view class="form-section">
-      <view class="section-head">课堂照片</view>
-      <view class="form-card">
-        <view class="upload-area">
-          <view v-if="imagePreview" class="upload-preview-wrap">
-            <image class="upload-preview" :src="imagePreview" mode="aspectFill" @tap="previewImage" />
-            <view class="upload-remove" @tap.stop="removeImage">×</view>
+          <view class="row">
+            <text class="row-label">自定义课件</text>
+            <input
+              v-model="customCoursewareName"
+              class="row-input"
+              placeholder="没有合适的可直接输入"
+              :adjust-position="true"
+              :cursor-spacing="120"
+              @input="onCustomCoursewareInput"
+            />
           </view>
-          <view v-else class="upload-placeholder" @tap="chooseImage">
-            <view class="upload-plus">+</view>
-            <text>上传课堂照片</text>
-            <text class="upload-hint">支持相册或拍照</text>
+          <view class="notes-wrap">
+            <textarea
+              v-model="notes"
+              class="textarea"
+              placeholder="备注（可选）"
+              :adjust-position="true"
+              :cursor-spacing="160"
+              :show-confirm-bar="false"
+            />
           </view>
-          <view v-if="uploadingImage" class="upload-loading">{{ uploadStatusText }}</view>
         </view>
-      </view>
-    </view>
 
-    <view class="form-section">
-      <view class="section-head">备注</view>
-      <view class="form-card">
-        <textarea v-model="notes" class="textarea" placeholder="备注信息（可选）" />
+        <view class="scroll-bottom-spacer" />
       </view>
-    </view>
+    </scroll-view>
 
     <view class="form-footer">
-      <button class="btn-primary footer-btn" :loading="submitting" @tap="handleSubmit">
-        {{ mode === 'edit' ? '保存修改' : '提交录入' }}
-      </button>
+      <view class="footer-info">
+        <text class="footer-name">{{ studentLabel || '未选择学员' }}</text>
+        <text class="footer-meta">{{ summaryMeta }}</text>
+      </view>
+      <view
+        class="footer-btn"
+        :class="{ 'footer-btn--disabled': submitting || uploadingImage }"
+        @tap="handleSubmit"
+      >
+        {{ submitting ? '提交中…' : mode === 'edit' ? '保存修改' : '提交' }}
+      </view>
     </view>
+
+    <!-- #ifdef MP-WEIXIN -->
+    <view v-if="showPrivacy" class="privacy-mask" @tap.stop>
+      <view class="privacy-box">
+        <text class="privacy-title">隐私保护提示</text>
+        <text class="privacy-desc">拍摄或选择课堂照片前，请先阅读并同意{{ privacyContractName || '用户隐私保护指引' }}。</text>
+        <button
+          id="agree-btn"
+          class="privacy-agree"
+          open-type="agreePrivacyAuthorization"
+          @agreeprivacyauthorization="onPrivacyAgree"
+        >同意</button>
+        <button class="privacy-cancel" @tap="onPrivacyDisagree">暂不</button>
+      </view>
+    </view>
+    <!-- #endif -->
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import {
   studentAPI,
@@ -170,10 +220,12 @@ import {
 import { isAllStores } from '@/utils/finance'
 import { LESSON_TYPES, dayOfWeekFromDate } from '@/utils/lessonType'
 import { formatStudentLabel } from '@/utils/format'
+import { formatClassHours } from '@/utils/classHours'
 import { imageFullUrl } from '@/utils/media'
 import { uploadLessonImage } from '@/utils/upload'
 import { prepareImageForUpload } from '@/utils/imageCompress'
 import { requireLogin, useUserStore } from '@/stores/user'
+import BackBar from '@/components/BackBar.vue'
 
 const userStore = useUserStore()
 
@@ -186,7 +238,8 @@ function todayStr() {
 
 const mode = ref('create')
 const recordId = ref('')
-const studentScope = ref('mine')
+/** 录入时搜索全部学员，不再区分「我的学员」 */
+const studentScope = 'all'
 const studentKeyword = ref('')
 const studentOptions = ref([])
 const studentId = ref(null)
@@ -207,10 +260,10 @@ const customCoursewareName = ref('')
 const teacherOptions = ref([])
 const teacherId = ref(null)
 const teacherLabel = ref('')
-const selfTeacherName = ref('')
 const classDate = ref(todayStr())
 const classesDeducted = ref(1)
-const deductOptions = ['0.5', '1', '1.5', '2', '2.5', '3']
+const today = todayStr()
+const showMore = ref(false)
 const income = ref('')
 const notes = ref('')
 const submitting = ref(false)
@@ -218,11 +271,45 @@ const imageUrl = ref('')
 const imagePreview = ref('')
 const uploadingImage = ref(false)
 const uploadStatusText = ref('')
+const showPrivacy = ref(false)
+const privacyContractName = ref('')
+let resolvePrivacyAuthorization = null
 
 let searchTimer = null
 
+const moreFilled = computed(() => !!(coursewareLabel.value || customCoursewareName.value.trim() || notes.value.trim()))
+
+const summaryMeta = computed(() => {
+  const type = lessonTypeLabels[lessonTypeIndex.value]
+  if (lessonType.value === 'temp') {
+    return `${type} · ${income.value ? '¥' + income.value : '待填收入'} · ${classDate.value}`
+  }
+  return `${type} · 扣 ${formatClassHours(classesDeducted.value)} 节 · ${classDate.value}`
+})
+
+/** 与 PC 端一致：1、2/3、0.5、1.5 */
+const BASE_DEDUCT_CHOICES = [
+  { value: 1, label: '1' },
+  { value: 0.6667, label: '2/3' },
+  { value: 0.5, label: '0.5' },
+  { value: 1.5, label: '1.5' }
+]
+
+function isDeductSelected(v) {
+  return Math.abs(Number(classesDeducted.value) - v) < 0.002
+}
+
+/** 修正旧记录时，如果原扣课不在标准选项里（如 2），额外保留一个选项，避免被改掉 */
+const deductChoices = computed(() => {
+  if (BASE_DEDUCT_CHOICES.some((d) => isDeductSelected(d.value))) return BASE_DEDUCT_CHOICES
+  const n = Number(classesDeducted.value)
+  if (!Number.isFinite(n) || n <= 0) return BASE_DEDUCT_CHOICES
+  return [...BASE_DEDUCT_CHOICES, { value: n, label: formatClassHours(n) }]
+})
+
 onLoad((query) => {
   if (!requireLogin()) return
+  setupPhotoPrivacy()
   mode.value = query.mode || 'create'
   recordId.value = query.id || ''
   uni.setNavigationBarTitle({ title: mode.value === 'edit' ? '修正课时' : '录入课时' })
@@ -265,7 +352,7 @@ async function initOptions() {
       const teachers = await teacherAPI.getList()
       teacherOptions.value = (teachers || []).map((t) => ({
         value: t.teacherId,
-        label: t.name || t.phone || `教师#${t.teacherId}`
+        label: t.name || t.phone || `员工#${t.teacherId}`
       }))
       if (mode.value !== 'edit') {
         teacherId.value = null
@@ -274,8 +361,6 @@ async function initOptions() {
     } else {
       teacherId.value = selfTeacherId
       teacherLabel.value = name
-      selfTeacherName.value = name
-      studentScope.value = 'mine'
     }
 
     if (mode.value === 'edit' && recordId.value) {
@@ -317,30 +402,34 @@ async function loadRecord(id) {
   imagePreview.value = imageFullUrl(record.imageUrl)
   if (record.studentId) await loadPackages(record.studentId)
   if (record.courseTypeId) await loadCourseware(record.courseTypeId)
+  showMore.value = moreFilled.value
 }
 
 function onStudentKeywordInput() {
   if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => searchStudents(), 300)
-}
-
-function onStudentScopeChange(scope) {
-  if (scope === studentScope.value) return
-  studentScope.value = scope
-  studentOptions.value = []
-  studentId.value = null
-  studentLabel.value = ''
-  if ((studentKeyword.value || '').trim()) searchStudents()
+  searchTimer = setTimeout(() => searchStudents(), 350)
 }
 
 async function searchStudents() {
   const keyword = (studentKeyword.value || '').trim()
+  if (!keyword) {
+    uni.showToast({ title: '请输入搜索关键字', icon: 'none' })
+    return
+  }
   try {
-    const list = await studentAPI.search(keyword, studentScope.value)
+    let list = await studentAPI.search(keyword, studentScope)
+    if (!list?.length) {
+      const page = await studentAPI.getPage({ current: 1, size: 40, name: keyword })
+      list = page?.records || []
+    }
     studentOptions.value = (list || []).map((s) => ({
       value: s.studentId,
       label: formatStudentLabel(s)
     }))
+    if (studentOptions.value.length === 1) {
+      await pickStudent(studentOptions.value[0])
+      return
+    }
     if (!studentOptions.value.length) {
       uni.showToast({ title: '未找到学员', icon: 'none' })
     }
@@ -349,12 +438,19 @@ async function searchStudents() {
   }
 }
 
-async function onStudentPick(e) {
-  const idx = Number(e.detail.value)
-  const picked = studentOptions.value[idx]
-  if (!picked) return
+function clearStudentPick() {
+  studentId.value = null
+  studentLabel.value = ''
+  packageId.value = null
+  packageLabel.value = ''
+  packageOptions.value = []
+}
+
+async function pickStudent(picked) {
+  if (!picked?.value) return
   studentId.value = picked.value
   studentLabel.value = picked.label
+  studentOptions.value = []
   packageId.value = null
   packageLabel.value = ''
   packageOptions.value = []
@@ -379,26 +475,39 @@ async function onStudentPick(e) {
   }
 }
 
-async function loadPackages(sid) {
-  const pkgs = await coursePackageAPI.getByStudent(sid)
-  packageOptions.value = (pkgs || []).map((p) => {
-    const dateStr = p.purchaseDate ? `（${p.purchaseDate}）` : ''
-    return { value: p.packageId, label: `${p.packageName}${dateStr}` }
-  })
-}
-
-function onLessonTypeChange(e) {
-  const idx = Number(e.detail.value)
+function setLessonType(idx) {
   lessonTypeIndex.value = idx
   lessonType.value = LESSON_TYPES[idx].value
 }
 
-function onPackagePick(e) {
-  const idx = Number(e.detail.value)
-  const picked = packageOptions.value[idx]
-  if (!picked) return
-  packageId.value = picked.value
-  packageLabel.value = picked.label
+function openPackagePicker() {
+  if (!packageOptions.value.length) {
+    uni.showToast({ title: '请先选学员或该学员无课包', icon: 'none' })
+    return
+  }
+  uni.showActionSheet({
+    itemList: packageOptions.value.map((p) => p.label),
+    success: (res) => {
+      const picked = packageOptions.value[res.tapIndex]
+      if (picked) {
+        packageId.value = picked.value
+        packageLabel.value = picked.label
+      }
+    }
+  })
+}
+
+async function loadPackages(sid) {
+  const pkgs = await coursePackageAPI.getByStudent(sid)
+  packageOptions.value = (pkgs || []).map((p) => {
+    const dateStr = p.purchaseDate ? ` · ${p.purchaseDate}` : ''
+    const rem = p.remainingClasses != null ? ` · 剩${p.remainingClasses}节` : ''
+    return { value: p.packageId, label: `${p.packageName}${dateStr}${rem}` }
+  })
+  if (packageOptions.value.length === 1 && lessonType.value === 'regular') {
+    packageId.value = packageOptions.value[0].value
+    packageLabel.value = packageOptions.value[0].label
+  }
 }
 
 async function onCourseTypePick(e) {
@@ -440,28 +549,92 @@ function onClassDateChange(e) {
   classDate.value = e.detail.value
 }
 
-function onDeductChange(e) {
-  classesDeducted.value = Number(deductOptions[e.detail.value])
-}
-
-function chooseImage() {
-  if (uploadingImage.value) return
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success(res) {
-      const filePath = res.tempFilePaths && res.tempFilePaths[0]
-      if (!filePath) return
-      compressAndUpload(filePath)
+function showImageSourceSheet() {
+  uni.showActionSheet({
+    itemList: ['拍照', '从相册选择'],
+    success: (res) => {
+      pickImage(res.tapIndex === 0 ? 'camera' : 'album')
     }
   })
+}
+
+function setupPhotoPrivacy() {
+  // #ifdef MP-WEIXIN
+  if (typeof wx === 'undefined') return
+  if (wx.onNeedPrivacyAuthorization) {
+    wx.onNeedPrivacyAuthorization((resolve) => {
+      resolvePrivacyAuthorization = resolve
+      showPrivacy.value = true
+    })
+  }
+  // #endif
+}
+
+function onPrivacyAgree() {
+  if (resolvePrivacyAuthorization) {
+    resolvePrivacyAuthorization({ buttonId: 'agree-btn', event: 'agree' })
+    resolvePrivacyAuthorization = null
+  }
+  showPrivacy.value = false
+}
+
+function onPrivacyDisagree() {
+  if (resolvePrivacyAuthorization) {
+    resolvePrivacyAuthorization({ event: 'disagree' })
+    resolvePrivacyAuthorization = null
+  }
+  showPrivacy.value = false
+}
+
+function handlePickFail(err) {
+  const msg = err?.errMsg || ''
+  if (/cancel/i.test(msg)) return
+  if (/112|scope is not declared/i.test(msg)) {
+    uni.showModal({
+      title: '公众平台未声明相册/摄像头',
+      content: '请到微信公众平台的用户隐私保护指引里勾选「选中的照片或视频」和「摄像头」，审核通过后再试。仅在小程序里点同意无法代替这一项。',
+      showCancel: false
+    })
+    return
+  }
+  if (/privacy/i.test(msg)) {
+    showPrivacy.value = true
+    return
+  }
+  if (/auth deny|authorize|permission/i.test(msg)) {
+    uni.showModal({
+      title: '需要相机或相册权限',
+      content: '请在手机系统设置中允许微信使用相机和相册，再回到小程序重试。',
+      showCancel: false
+    })
+    return
+  }
+  uni.showToast({ title: msg.replace(/^choose\w+:fail\s*/i, '') || '无法打开相机或相册', icon: 'none' })
+}
+
+function openImagePicker(source) {
+  const sourceType = source === 'camera' ? ['camera'] : ['album']
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed', 'original'],
+    sourceType,
+    success(res) {
+      const filePath = res.tempFilePaths && res.tempFilePaths[0]
+      if (filePath) compressAndUpload(filePath)
+    },
+    fail: handlePickFail
+  })
+}
+
+function pickImage(source) {
+  if (uploadingImage.value) return
+  openImagePicker(source)
 }
 
 async function compressAndUpload(filePath) {
   if (uploadingImage.value) return
   uploadingImage.value = true
-  uploadStatusText.value = '压缩中…'
+  uploadStatusText.value = '处理中…'
   imagePreview.value = filePath
   try {
     const prepared = await prepareImageForUpload(filePath, {
@@ -472,11 +645,11 @@ async function compressAndUpload(filePath) {
     const url = await uploadLessonImage(prepared)
     imageUrl.value = url
     imagePreview.value = imageFullUrl(url)
-    uni.showToast({ title: '上传成功', icon: 'success' })
+    uni.showToast({ title: '照片已上传', icon: 'success' })
   } catch (e) {
     imageUrl.value = ''
     imagePreview.value = ''
-    uni.showToast({ title: e.message || '上传失败', icon: 'none' })
+    uni.showToast({ title: e.message || '上传失败', icon: 'none', duration: 2800 })
   } finally {
     uploadingImage.value = false
     uploadStatusText.value = ''
@@ -528,15 +701,15 @@ function validate() {
     return false
   }
   if (userStore.isAdmin && !teacherId.value) {
-    uni.showToast({ title: '请选择授课老师', icon: 'none' })
+    uni.showToast({ title: '请选择上课员工', icon: 'none' })
     return false
   }
   if (!userStore.isAdmin && !userStore.userInfo?.teacherId) {
-    uni.showToast({ title: '当前账号未绑定教师', icon: 'none' })
+    uni.showToast({ title: '账号未关联上课员工，请联系管理员', icon: 'none' })
     return false
   }
   if (!studentId.value || !classDate.value) {
-    uni.showToast({ title: '请填写学员和日期', icon: 'none' })
+    uni.showToast({ title: '请选择学员和日期', icon: 'none' })
     return false
   }
   if (lessonType.value === 'regular' && !packageId.value) {
@@ -551,7 +724,7 @@ function validate() {
 }
 
 async function handleSubmit() {
-  if (submitting.value || !validate()) return
+  if (submitting.value || uploadingImage.value || !validate()) return
   const payload = buildSubmitData()
   submitting.value = true
   try {
@@ -594,237 +767,484 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
+$ink: #2a241f;
+$muted: #8a8178;
+$line: #f0eae3;
+$orange: #f37021;
+
 .page-form {
-  min-height: 100vh;
-  background: var(--bg-page);
-  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
-}
-
-.form-section {
-  padding: 24rpx 24rpx 0;
-}
-
-.section-head {
-  font-size: 26rpx;
-  color: var(--text-muted);
-  margin-bottom: 12rpx;
-  padding-left: 8rpx;
-}
-
-.form-card {
-  background: var(--canvas);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1rpx solid var(--hairline);
-}
-
-.cell {
+  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
-  padding: 28rpx 24rpx;
-  border-bottom: 1rpx solid var(--hairline);
+  flex-direction: column;
+  background: #f6f2ec;
+  box-sizing: border-box;
 }
 
-.cell:last-child {
-  border-bottom: none;
-}
-
-.cell-label {
-  flex-shrink: 0;
-  font-size: 28rpx;
-  color: var(--text-ink);
-}
-
-.cell-value {
+.form-scroll {
   flex: 1;
-  text-align: right;
-  font-size: 28rpx;
-  color: var(--text-ink);
+  height: 0;
 }
 
-.cell-value.placeholder {
-  color: #bbb;
+.form-inner {
+  padding: 8rpx 24rpx 0;
 }
 
-.cell-value.arrow::after {
-  content: ' ›';
-  color: #ccc;
-}
-
-.field-block.inner {
-  padding: 0 24rpx 24rpx;
-}
-
-.scope-row {
+.top {
   display: flex;
-  gap: 16rpx;
-  padding: 0 24rpx 16rpx;
-}
-
-.scope-chip {
-  padding: 10rpx 24rpx;
-  border-radius: var(--radius-full);
-  font-size: 24rpx;
-  color: var(--text-muted);
-  background: var(--bg-page);
-}
-
-.scope-chip.active {
-  color: var(--primary);
-  background: var(--primary-light);
-  font-weight: 500;
-}
-
-.search-row {
-  display: flex;
-  gap: 16rpx;
   align-items: center;
-  padding: 0 24rpx 16rpx;
+  gap: 12rpx;
+  padding: 8rpx 0 16rpx;
+}
+
+.top-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $ink;
+}
+
+.card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+/* 学员 */
+.card--student {
+  padding: 20rpx;
+  background: linear-gradient(180deg, #fff6ee 0%, #fff 80%);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  height: 84rpx;
+  padding: 0 8rpx 0 26rpx;
+  background: #fff;
+  border: 2rpx solid #f3d9c7;
+  border-radius: 999rpx;
 }
 
 .search-input {
   flex: 1;
-}
-
-.search-btn {
-  flex-shrink: 0;
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.field-block {
-  padding-top: 24rpx;
-}
-
-.field-label {
-  padding: 0 24rpx 12rpx;
-  font-size: 26rpx;
-  color: var(--text-muted);
-}
-
-.input,
-.textarea,
-.field-block .cell-value {
-  background: var(--bg-page);
-  border: 1rpx solid var(--hairline);
-  border-radius: var(--radius-sm);
-  padding: 20rpx 24rpx;
+  min-width: 0;
+  height: 100%;
   font-size: 28rpx;
+  color: $ink;
 }
 
-.field-block .cell-value {
-  margin: 0 24rpx 16rpx;
+.search-ph {
+  font-size: 26rpx;
+  color: #b7aea4;
 }
 
-.textarea {
-  width: calc(100% - 48rpx);
-  min-height: 160rpx;
-  margin: 0 24rpx 24rpx;
+.search-go {
+  flex-shrink: 0;
+  height: 68rpx;
+  line-height: 68rpx;
+  padding: 0 36rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+  color: #fff;
+  background: $orange;
+  border-radius: 999rpx;
+}
+
+.search-tip {
+  margin-top: 14rpx;
+  padding-left: 8rpx;
+  font-size: 22rpx;
+  color: $muted;
+}
+
+.results {
+  margin-top: 14rpx;
+  max-height: 340rpx;
+  background: #fff;
+  border: 1rpx solid $line;
+  border-radius: 18rpx;
+}
+
+.result {
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  color: $ink;
+  border-bottom: 1rpx solid $line;
+}
+
+.result--hover { background: #fff3ea; }
+
+.picked {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 4rpx 4rpx;
+}
+
+.picked-avatar {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+  background: $orange;
+  border-radius: 24rpx;
+}
+
+.picked-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $ink;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picked-change {
+  flex-shrink: 0;
+  padding: 8rpx 22rpx;
+  font-size: 24rpx;
+  color: $orange;
+  background: rgba(243, 112, 33, 0.1);
+  border-radius: 999rpx;
+}
+
+/* 课时类型 */
+.types {
+  display: flex;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
+}
+
+.type {
+  flex: 1;
+  padding: 18rpx 0;
+  text-align: center;
+  font-size: 24rpx;
+  color: #6f665d;
+  background: #fff;
+  border: 2rpx solid transparent;
+  border-radius: 18rpx;
+  box-shadow: 0 4rpx 14rpx rgba(42, 36, 31, 0.04);
+  white-space: nowrap;
+}
+
+.type.active { color: #fff; font-weight: 700; }
+.type--regular.active { background: #3d7dff; }
+.type--trial.active { background: #1aa6a6; }
+.type--gift.active { background: #4c9a2a; }
+.type--temp.active { background: #e07a1a; }
+.type--renewal_pending.active { background: #7a45c9; }
+
+/* 行 */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  min-height: 100rpx;
+  padding: 0 28rpx;
+  border-bottom: 1rpx solid $line;
   box-sizing: border-box;
 }
 
-.custom-name {
-  margin: 12rpx 24rpx 24rpx;
-}
+.row:last-child { border-bottom: none; }
+.row--hover { background: #faf6f1; }
 
-.tips {
-  padding: 0 24rpx 24rpx;
-  font-size: 24rpx;
-}
-
-.upload-area {
-  padding: 24rpx;
-  position: relative;
-}
-
-.upload-placeholder {
-  height: 280rpx;
-  border: 2rpx dashed var(--hairline);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10rpx;
-  color: var(--text-muted);
+.row-label {
+  flex-shrink: 0;
+  min-width: 140rpx;
   font-size: 28rpx;
-  background: var(--bg-page);
+  color: #5c534b;
 }
 
-.upload-plus {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: 48rpx;
-  line-height: 68rpx;
-  text-align: center;
+.req {
+  color: #d4380d;
+  margin-left: 4rpx;
 }
 
-.upload-hint {
-  font-size: 22rpx;
-  color: #bbb;
-}
-
-.upload-preview-wrap {
-  position: relative;
-  width: 100%;
-  height: 360rpx;
-  border-radius: var(--radius-md);
+.row-value {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 28rpx;
+  color: $ink;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.upload-preview {
-  width: 100%;
-  height: 100%;
+.row-value.ph { color: #b7aea4; }
+
+.row-tag {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  font-size: 20rpx;
+  color: $orange;
+  background: rgba(243, 112, 33, 0.1);
+  border-radius: 999rpx;
 }
 
-.upload-remove {
-  position: absolute;
-  top: 16rpx;
-  right: 16rpx;
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  text-align: center;
-  line-height: 44rpx;
+.row-arrow {
+  flex-shrink: 0;
   font-size: 36rpx;
+  line-height: 1;
+  color: #cfc6bc;
 }
 
-.upload-loading {
+.row-input {
+  flex: 1;
+  min-width: 0;
+  height: 100rpx;
+  text-align: right;
+  font-size: 28rpx;
+  color: $ink;
+}
+
+/* 扣课选项 */
+.deduct {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10rpx;
+}
+
+.deduct-chip {
+  min-width: 84rpx;
+  padding: 14rpx 18rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #5c534b;
+  background: #f6f2ec;
+  border: 2rpx solid transparent;
+  border-radius: 16rpx;
+}
+
+.deduct-chip.active {
+  color: #fff;
+  font-weight: 700;
+  background: $orange;
+}
+
+/* 照片 */
+.row--photo {
+  min-height: 112rpx;
+}
+
+.photo-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12rpx;
+}
+
+.photo-btn {
+  padding: 14rpx 32rpx;
+  font-size: 26rpx;
+  color: #6533b3;
+  background: rgba(122, 69, 201, 0.1);
+  border-radius: 999rpx;
+}
+
+.photo-btn--primary {
+  color: #fff;
+  background: #7a45c9;
+  font-weight: 600;
+}
+
+.thumb-wrap {
+  position: relative;
+  margin-left: auto;
+  width: 88rpx;
+  height: 88rpx;
+}
+
+.thumb {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 16rpx;
+  background: #f6f2ec;
+}
+
+.thumb-x {
+  position: absolute;
+  top: -12rpx;
+  right: -12rpx;
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 34rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #fff;
+  background: rgba(42, 36, 31, 0.75);
+  border-radius: 50%;
+}
+
+.thumb-loading {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--text-muted);
+  font-size: 20rpx;
+  color: #fff;
+  background: rgba(42, 36, 31, 0.55);
+  border-radius: 16rpx;
+}
+
+/* 更多 */
+.more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.more-text {
+  font-size: 26rpx;
+  color: $muted;
+}
+
+.more-dot {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  font-size: 20rpx;
+  color: $orange;
+  background: rgba(243, 112, 33, 0.1);
+  border-radius: 999rpx;
+}
+
+.more-arrow {
+  font-size: 36rpx;
+  line-height: 1;
+  color: #cfc6bc;
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+}
+
+.more-arrow.open { transform: rotate(-90deg); }
+
+.notes-wrap {
+  padding: 8rpx 28rpx 24rpx;
+}
+
+.textarea {
+  width: 100%;
+  height: 160rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+  font-size: 27rpx;
+  background: #f9f6f1;
+  border-radius: 16rpx;
+}
+
+.scroll-bottom-spacer { height: 32rpx; }
+
+/* 底部提交栏 */
+.form-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid rgba(42, 36, 31, 0.08);
+}
+
+.footer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.footer-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: $ink;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-meta {
+  font-size: 22rpx;
+  color: $muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-btn {
+  flex-shrink: 0;
+  min-width: 240rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  background: $orange;
+  color: #fff;
+}
+
+.footer-btn--disabled { opacity: 0.55; }
+
+.privacy-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(42, 36, 31, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+}
+
+.privacy-box {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 36rpx 32rpx 28rpx;
+}
+
+.privacy-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  margin-bottom: 16rpx;
+}
+
+.privacy-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #595959;
+  line-height: 1.5;
+  margin-bottom: 28rpx;
+}
+
+.privacy-agree {
+  background: $orange;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+}
+
+.privacy-agree::after { border: none; }
+
+.privacy-cancel {
+  margin-top: 12rpx;
+  background: transparent;
+  color: $muted;
   font-size: 28rpx;
 }
 
-.form-footer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1rpx solid var(--hairline);
-}
-
-.footer-btn,
-.btn-primary {
-  width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 44rpx;
-  font-size: 32rpx;
-  background: var(--primary);
-  color: #fff;
-}
+.privacy-cancel::after { border: none; }
 </style>

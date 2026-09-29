@@ -8,7 +8,7 @@ const PROD_BASE = 'https://orangeloveart.cn/api'
 export const BASE_URL = USE_LOCAL ? LOCAL_BASE : PROD_BASE
 export const ICP_NUMBER = '沪ICP备2026020949号'
 
-/** 11 位手机号视为教师账号 */
+/** 11 位手机号视为员工账号 */
 export const PHONE_PATTERN = /^1\d{10}$/
 
 export const ADMIN_ROLES = ['super_admin', 'finance_admin', 'admin']

@@ -1,5 +1,6 @@
 <template>
   <view v-if="record" class="page-detail">
+    <BackBar />
     <view class="detail-hero">
       <view class="detail-name">{{ record.studentName || '—' }}</view>
       <view class="tag">{{ lessonTypeLabel }}</view>
@@ -28,12 +29,12 @@
         <text>{{ record.coursewareName || '—' }}</text>
       </view>
       <view class="info-row">
-        <text class="label">授课老师</text>
+        <text class="label">上课员工</text>
         <text>{{ record.teacherName || '—' }}</text>
       </view>
       <view class="info-row">
         <text class="label">扣除课时</text>
-        <text>{{ record.classesDeducted }}</text>
+        <text>{{ formatClassHours(record.classesDeducted) }}</text>
       </view>
       <view v-if="record.income != null" class="info-row">
         <text class="label">课时收入</text>
@@ -60,8 +61,10 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { attendanceAPI } from '@/api'
+import BackBar from '@/components/BackBar.vue'
 import { requireLogin } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
+import { formatClassHours } from '@/utils/classHours'
 import { formatDateTime } from '@/utils/format'
 import { imageFullUrl } from '@/utils/media'
 

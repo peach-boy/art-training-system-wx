@@ -1,35 +1,48 @@
 <template>
   <view class="login-page">
-    <view class="login-status" :style="{ height: statusBarHeight + 'px' }" />
-    <view class="login-body">
+    <!-- 顶部品牌区 -->
+    <view class="hero">
+      <view class="hero-bubble hero-bubble--a" />
+      <view class="hero-bubble hero-bubble--b" />
+      <view class="hero-bubble hero-bubble--c" />
+      <view class="login-status" :style="{ height: statusBarHeight + 'px' }" />
       <view class="login-brand">
-        <view class="login-logo">A</view>
-        <text class="login-title">ART 教务移动版</text>
-        <!-- #ifdef MP-WEIXIN -->
-        <text class="login-sub">微信手机号登录（须与系统登记号码一致）</text>
-        <!-- #endif -->
-        <!-- #ifndef MP-WEIXIN -->
-        <text class="login-sub">教师与管理员统一登录</text>
-        <!-- #endif -->
+        <view class="login-logo">
+          <view class="logo-fruit" />
+          <view class="logo-leaf" />
+        </view>
+        <text class="login-title">橙子课时助手</text>
+        <text class="login-sub">录课时、看课表，随手就能办</text>
       </view>
+    </view>
 
+    <!-- 登录卡片 -->
+    <view class="login-body">
       <!-- #ifdef MP-WEIXIN -->
       <view class="login-form login-form--wechat">
+        <text class="form-title">欢迎回来</text>
+        <text class="form-desc">使用微信绑定的手机号快速登录，无需记密码</text>
+
         <button
           class="btn-wechat"
           open-type="getPhoneNumber"
-          :loading="loading"
-          :disabled="loading"
           @getphonenumber="onGetPhoneNumber"
         >
-          微信手机号登录
+          <text class="btn-wechat__icon">☎</text>
+          <text>微信手机号一键登录</text>
         </button>
+        <text v-if="loginError" class="login-error">{{ loginError }}</text>
+
+        <view class="login-points">
+          <text class="login-point">员工 / 管理员通用</text>
+          <text class="login-point">号码需已在系统登记</text>
+        </view>
+
+        <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在手机微信中操作。</text>
         <text v-if="privacyContractName" class="login-tip">
           登录即表示同意
           <text class="login-tip-link" @tap="openPrivacyContract">{{ privacyContractName }}</text>
         </text>
-        <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在手机微信中操作。</text>
-        <text class="login-tip">仅支持已在系统中录入手机号的教师或管理员。</text>
       </view>
       <view v-if="showPrivacy" class="privacy-mask" @tap.stop>
         <view class="privacy-box">
@@ -53,6 +66,8 @@
 
       <!-- #ifndef MP-WEIXIN -->
       <view class="login-form">
+        <text class="form-title">欢迎回来</text>
+        <text class="form-desc">员工与管理员统一登录</text>
         <view class="field">
           <text class="field-label">账号</text>
           <input
@@ -116,13 +131,15 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { authAPI } from '@/api'
 import { PHONE_PATTERN, ICP_NUMBER } from '@/utils/config'
 import { useUserStore, navigateAfterLogin } from '@/stores/user'
-import { isLoggedIn } from '@/utils/storage'
+import { isLoggedIn, setSkipSilentWechatLogin, shouldSkipSilentWechatLogin } from '@/utils/storage'
 import { inputEventValue } from '@/utils/input'
 
 const userStore = useUserStore()
+let skipSilentOnce = false
 
 const statusBarHeight = ref(20)
 const account = ref('')
@@ -131,6 +148,8 @@ const captchaKey = ref('')
 const captchaCode = ref('')
 const captchaImage = ref('')
 const loading = ref(false)
+const loginError = ref('')
+let loginSeq = 0
 const icpNumber = ICP_NUMBER
 // #ifdef MP-WEIXIN
 const isDevtools = ref(false)
@@ -147,7 +166,7 @@ const needCaptcha = computed(() => {
 const loginTip = computed(() =>
   needCaptcha.value
     ? '管理员账号需填写图形验证码'
-    : '教师请使用手机号登录，免验证码'
+    : '员工请使用手机号登录，免验证码'
 )
 
 watch(needCaptcha, (val) => {
@@ -155,6 +174,23 @@ watch(needCaptcha, (val) => {
   if (val && !captchaImage.value) loadCaptcha()
   // #endif
 })
+
+onLoad((query) => {
+  if (query?.loggedOut === '1') skipSilentOnce = true
+})
+
+/** 主动退出后不再静默登录：onMounted 可能早于 onLoad，这里直接读页面参数和本地标记 */
+function shouldSkipSilent() {
+  if (skipSilentOnce) return true
+  if (shouldSkipSilentWechatLogin()) return true
+  try {
+    const pages = getCurrentPages()
+    const opts = pages[pages.length - 1]?.options || {}
+    return opts.loggedOut === '1'
+  } catch (e) {
+    return false
+  }
+}
 
 onMounted(() => {
   try {
@@ -176,7 +212,9 @@ onMounted(() => {
     /* ignore */
   }
   setupPrivacyAuth()
-  trySilentWechatLogin()
+  if (!shouldSkipSilent()) {
+    trySilentWechatLogin()
+  }
   // #endif
 })
 
@@ -195,16 +233,16 @@ function wxLoginCode() {
 
 /** 已绑定 openid 时静默登录 */
 async function trySilentWechatLogin() {
-  loading.value = true
+  const seq = ++loginSeq
   try {
     const loginCode = await wxLoginCode()
+    if (seq !== loginSeq) return
     const data = await authAPI.wechatMiniProgramLogin({ loginCode })
+    if (seq !== loginSeq) return
     userStore.applyLogin(data)
     navigateAfterLogin(data.role)
   } catch {
-    /* 未绑定或需授权手机号，展示登录按钮 */
-  } finally {
-    loading.value = false
+    /* 未绑定或需授权手机号，留在登录页点按钮 */
   }
 }
 
@@ -241,16 +279,6 @@ function setupPrivacyAuth() {
     wx.onNeedPrivacyAuthorization((resolve) => {
       resolvePrivacyAuthorization = resolve
       showPrivacy.value = true
-    })
-  }
-  if (wx.requirePrivacyAuthorize) {
-    wx.requirePrivacyAuthorize({
-      success: () => {
-        showPrivacy.value = false
-      },
-      fail: () => {
-        /* 用户拒绝或未弹出 */
-      }
     })
   }
 }
@@ -330,17 +358,15 @@ function phoneAuthFailToast(detail) {
 // #endif
 
 async function onGetPhoneNumber(e) {
-  if (loading.value) {
-    uni.showToast({ title: '正在连接，请稍候…', icon: 'none' })
-    return
-  }
+  loginSeq += 1
+  const seq = loginSeq
+  loginError.value = ''
   const detail = parseGetPhoneDetail(e)
   if (detail.errMsg !== 'getPhoneNumber:ok' || !detail.code) {
+    const failText = detail.errMsg || '没有拿到手机号授权'
+    loginError.value = failText
     // #ifdef MP-WEIXIN
     phoneAuthFailToast(detail)
-    // #endif
-    // #ifndef MP-WEIXIN
-    uni.showToast({ title: '需要授权手机号才能登录', icon: 'none' })
     // #endif
     return
   }
@@ -351,11 +377,13 @@ async function onGetPhoneNumber(e) {
       loginCode,
       phoneCode: detail.code
     })
+    if (seq !== loginSeq) return
+    setSkipSilentWechatLogin(false)
     userStore.applyLogin(data)
-    uni.showToast({ title: '登录成功', icon: 'success' })
+    uni.showToast({ title: `已登录 ${data.realName || ''}`, icon: 'none', duration: 2000 })
     setTimeout(() => navigateAfterLogin(data.role), 400)
   } catch (err) {
-    uni.showToast({ title: err.message || '登录失败', icon: 'none', duration: 2800 })
+    loginError.value = err.message || '登录失败'
   } finally {
     loading.value = false
   }
@@ -396,6 +424,7 @@ async function handlePasswordLogin() {
       payload.captchaCode = captchaCode.value
     }
     const data = await authAPI.mobileLogin(payload)
+    setSkipSilentWechatLogin(false)
     userStore.applyLogin(data)
     uni.showToast({ title: '登录成功', icon: 'success' })
     setTimeout(() => navigateAfterLogin(data.role), 400)
@@ -414,109 +443,215 @@ function copyIcp() {
 </script>
 
 <style lang="scss" scoped>
+$ink: #2a241f;
+$muted: #8a8178;
+$orange: #f37021;
+
 .login-page {
   min-height: 100vh;
-  background: var(--bg-page);
+  background: #f6f2ec;
 }
 
-.login-body {
-  padding: 48rpx 40rpx 60rpx;
+/* 顶部品牌区 */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 150rpx;
+  background: linear-gradient(160deg, #ff9a3d 0%, #f37021 55%, #e4551a 100%);
+  border-radius: 0 0 64rpx 64rpx;
 }
+
+.hero-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-bubble--a { width: 360rpx; height: 360rpx; top: -120rpx; right: -100rpx; }
+.hero-bubble--b { width: 220rpx; height: 220rpx; top: 220rpx; left: -90rpx; background: rgba(255, 255, 255, 0.09); }
+.hero-bubble--c { width: 120rpx; height: 120rpx; top: 120rpx; right: 120rpx; background: rgba(255, 255, 255, 0.1); }
 
 .login-brand {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 64rpx;
+  padding-top: 72rpx;
 }
 
+/* 橙子 logo：橙色圆 + 绿叶 */
 .login-logo {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(135deg, #f37021, #ff8534);
-  color: #fff;
-  font-size: 48rpx;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(243, 112, 33, 0.35);
+  position: relative;
+  width: 148rpx;
+  height: 148rpx;
+  border-radius: 44rpx;
+  background: #fff;
+  box-shadow: 0 16rpx 40rpx rgba(120, 40, 0, 0.28);
+}
+
+.logo-fruit {
+  position: absolute;
+  left: 28rpx;
+  top: 40rpx;
+  width: 92rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb15a 0%, #f37021 70%);
+}
+
+.logo-leaf {
+  position: absolute;
+  left: 76rpx;
+  top: 22rpx;
+  width: 44rpx;
+  height: 22rpx;
+  border-radius: 22rpx 0 22rpx 0;
+  background: #4fae3a;
+  transform: rotate(-18deg);
 }
 
 .login-title {
-  margin-top: 24rpx;
-  font-size: 40rpx;
-  font-weight: 600;
-  color: var(--text-ink);
+  margin-top: 30rpx;
+  font-size: 48rpx;
+  font-weight: 800;
+  letter-spacing: 4rpx;
+  color: #fff;
 }
 
 .login-sub {
-  margin-top: 8rpx;
+  margin-top: 12rpx;
   font-size: 26rpx;
-  color: var(--text-muted);
-  text-align: center;
-  padding: 0 24rpx;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* 登录卡片 */
+.login-body {
+  position: relative;
+  margin-top: -96rpx;
+  padding: 0 32rpx 60rpx;
 }
 
 .login-form {
-  background: var(--canvas);
-  border-radius: var(--radius-md);
-  padding: 32rpx;
-  border: 1rpx solid var(--hairline);
+  padding: 48rpx 36rpx 40rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  box-shadow: 0 20rpx 60rpx rgba(120, 60, 10, 0.12);
 }
 
-.login-form--wechat {
-  padding: 40rpx 32rpx;
+.form-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 800;
+  color: $ink;
+}
+
+.form-desc {
+  display: block;
+  margin: 10rpx 0 40rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: $muted;
 }
 
 .btn-wechat {
-  height: 96rpx;
-  line-height: 96rpx;
-  background: #07c160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  background: linear-gradient(135deg, #ff8a3d, #f37021);
   color: #fff;
   font-size: 32rpx;
+  font-weight: 700;
+  border-radius: 999rpx;
+  border: none;
+  box-shadow: 0 12rpx 28rpx rgba(243, 112, 33, 0.35);
+}
+
+.btn-wechat::after { border: none; }
+
+.btn-wechat__icon {
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.login-points {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-top: 32rpx;
+}
+
+.login-point {
+  padding: 6rpx 20rpx;
+  font-size: 22rpx;
+  color: $orange;
+  background: rgba(243, 112, 33, 0.09);
+  border-radius: 999rpx;
+}
+
+.login-error {
+  display: block;
+  margin-top: 28rpx;
+  padding: 18rpx 22rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: #c13515;
+  background: #fff1ee;
+  border-radius: 16rpx;
+}
+
+.login-tip {
+  display: block;
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 23rpx;
+  color: $muted;
+  line-height: 1.6;
+}
+
+.login-tip--warn {
+  color: #c45c00;
   font-weight: 500;
-  border-radius: var(--radius-sm);
-  border: none;
 }
 
-.btn-wechat::after {
-  border: none;
+.login-tip-link {
+  color: $orange;
+  text-decoration: underline;
 }
 
-.field {
-  margin-bottom: 28rpx;
-}
+/* H5 账号密码 */
+.field { margin-bottom: 28rpx; }
 
 .field-label {
   display: block;
   font-size: 24rpx;
-  color: var(--text-muted);
+  color: $muted;
   margin-bottom: 12rpx;
 }
 
 .field-input {
   width: 100%;
-  height: 88rpx;
-  padding: 0 24rpx;
-  background: var(--bg-page);
-  border-radius: var(--radius-sm);
-  border: 1rpx solid var(--hairline);
+  height: 92rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  background: #f6f2ec;
+  border-radius: 24rpx;
+  border: 2rpx solid transparent;
   font-size: 28rpx;
-  color: var(--text-ink);
+  color: $ink;
 }
 
-.field-ph {
-  color: #929292;
-}
+.field-ph { color: #b7aea4; }
 
 .captcha-box {
   margin-top: 16rpx;
   width: 100%;
   background: #fff;
-  border-radius: var(--radius-sm);
-  border: 1rpx solid var(--hairline);
+  border-radius: 20rpx;
+  border: 1rpx solid #f0eae3;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -533,59 +668,40 @@ function copyIcp() {
   justify-content: center;
   min-height: 150rpx;
   font-size: 28rpx;
-  color: var(--primary);
-  background: var(--primary-light);
+  color: $orange;
+  background: rgba(243, 112, 33, 0.08);
 }
 
 .captcha-hint {
   display: block;
   text-align: center;
   font-size: 22rpx;
-  color: var(--text-muted);
+  color: $muted;
   padding: 8rpx 0 12rpx;
-  background: #fafafa;
+  background: #faf7f3;
 }
 
 .btn-login {
   margin-top: 12rpx;
-  height: 96rpx;
-  line-height: 96rpx;
-  background: var(--primary);
+  height: 100rpx;
+  line-height: 100rpx;
+  background: linear-gradient(135deg, #ff8a3d, #f37021);
   color: #fff;
   font-size: 32rpx;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
+  font-weight: 700;
+  border-radius: 999rpx;
   border: none;
+  box-shadow: 0 12rpx 28rpx rgba(243, 112, 33, 0.3);
 }
 
-.btn-login::after {
-  border: none;
-}
+.btn-login::after { border: none; }
 
-.login-tip {
-  display: block;
-  margin-top: 24rpx;
-  text-align: center;
-  font-size: 24rpx;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.login-tip--warn {
-  color: #c45c00;
-  font-weight: 500;
-}
-
-.login-tip-link {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
+/* 隐私弹层 */
 .privacy-mask {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(42, 36, 31, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,47 +710,45 @@ function copyIcp() {
 
 .privacy-box {
   width: 100%;
-  max-width: 600rpx;
+  max-width: 620rpx;
   background: #fff;
-  border-radius: var(--radius-md);
-  padding: 40rpx 32rpx;
+  border-radius: 36rpx;
+  padding: 44rpx 36rpx 32rpx;
 }
 
 .privacy-title {
   display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--text-ink);
+  font-size: 34rpx;
+  font-weight: 700;
+  color: $ink;
   margin-bottom: 16rpx;
 }
 
 .privacy-desc {
   display: block;
   font-size: 26rpx;
-  color: var(--text-muted);
+  color: $muted;
   line-height: 1.6;
   margin-bottom: 32rpx;
 }
 
 .btn-privacy-cancel {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
   height: 80rpx;
   line-height: 80rpx;
   background: transparent;
-  color: var(--text-muted);
+  color: $muted;
   font-size: 28rpx;
   border: none;
 }
 
-.btn-privacy-cancel::after {
-  border: none;
-}
+.btn-privacy-cancel::after { border: none; }
 
 .login-icp {
   display: block;
-  margin-top: 48rpx;
+  margin-top: 40rpx;
   text-align: center;
   font-size: 22rpx;
-  color: #929292;
+  color: #b7aea4;
 }
 </style>

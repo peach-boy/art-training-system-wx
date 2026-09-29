@@ -1,5 +1,5 @@
 import { BASE_URL } from './config'
-import { getToken } from './storage'
+import { getToken, getCurrentStoreId } from './storage'
 
 function parseUploadResponse(res) {
   try {
@@ -16,6 +16,8 @@ function authHeader() {
   const token = getToken()
   const header = {}
   if (token) header.Authorization = `Bearer ${token}`
+  const storeId = getCurrentStoreId()
+  if (storeId) header['X-Store-Id'] = storeId
   return header
 }
 

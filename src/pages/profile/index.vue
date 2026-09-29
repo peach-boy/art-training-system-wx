@@ -1,17 +1,21 @@
 <template>
   <PageShell title="我的" :tab-bar="true" tab-active="profile">
-    <view class="profile card">
+    <view class="profile">
       <view class="avatar">{{ avatarText }}</view>
-      <view class="info">
-        <text class="name">{{ userStore.displayName }}</text>
-        <text class="role">{{ roleLabel }}</text>
-        <text v-if="userStore.userInfo?.username" class="account">{{ userStore.userInfo.username }}</text>
-      </view>
+      <text class="name">{{ userStore.displayName }}</text>
+      <text class="role">{{ roleLabel }}</text>
+      <text v-if="userStore.userInfo?.username" class="account">{{ userStore.userInfo.username }}</text>
     </view>
 
-    <view class="actions card">
-      <button class="action-btn" @tap="goHome">返回首页</button>
-      <button class="action-btn action-btn--danger" @tap="onLogout">退出登录</button>
+    <view class="menu">
+      <view class="menu-item" hover-class="menu-item--hover" @tap="goHome">
+        <text class="menu-title">返回首页</text>
+        <text class="menu-arrow">›</text>
+      </view>
+      <view class="menu-item" hover-class="menu-item--hover" @tap="onLogout">
+        <text class="menu-title menu-title--danger">退出登录</text>
+        <text class="menu-arrow">›</text>
+      </view>
     </view>
   </PageShell>
 </template>
@@ -22,6 +26,7 @@ import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { getRoleDisplay } from '@/utils/role'
+import { setSkipSilentWechatLogin } from '@/utils/storage'
 
 const userStore = useUserStore()
 
@@ -48,67 +53,89 @@ function onLogout() {
     content: '确定退出当前账号？',
     success: async (res) => {
       if (!res.confirm) return
+      // 主动退出后，登录页不再静默登录，需点「微信手机号登录」才会重新进入
+      setSkipSilentWechatLogin(true)
       await userStore.logout()
-      uni.reLaunch({ url: '/pages/login/login' })
+      uni.reLaunch({ url: '/pages/login/login?loggedOut=1' })
     }
   })
 }
 </script>
 
 <style lang="scss" scoped>
-.card {
-  background: var(--canvas);
-  border-radius: var(--radius-md);
-  border: 1rpx solid var(--hairline);
-  padding: 28rpx;
-  margin-bottom: 24rpx;
-}
-
 .profile {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 24rpx;
+  padding: 48rpx 24rpx 40rpx;
+  margin-bottom: 24rpx;
+  background: linear-gradient(180deg, #fff3e8 0%, #fff 100%);
+  border-radius: 28rpx;
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
 }
 
 .avatar {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: 40rpx;
+  width: 128rpx;
+  height: 128rpx;
+  line-height: 128rpx;
+  text-align: center;
+  border-radius: 44rpx;
+  background: linear-gradient(135deg, #f37021, #ff9a4d);
+  color: #fff;
+  font-size: 56rpx;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .name {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 600;
+  margin-top: 24rpx;
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #2a241f;
 }
 
-.role,
+.role {
+  margin-top: 12rpx;
+  padding: 4rpx 20rpx;
+  font-size: 23rpx;
+  color: #f37021;
+  background: rgba(243, 112, 33, 0.12);
+  border-radius: 999rpx;
+}
+
 .account {
-  display: block;
-  margin-top: 8rpx;
+  margin-top: 12rpx;
   font-size: 24rpx;
-  color: var(--text-muted);
+  color: #8a8178;
 }
 
-.action-btn {
-  margin-bottom: 16rpx;
-  background: var(--bg-page);
-  color: var(--text-ink);
-  border-radius: var(--radius-sm);
+.menu {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
+  overflow: hidden;
 }
 
-.action-btn--danger {
-  color: #c13515;
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 28rpx;
+  border-bottom: 1rpx solid #f0eae3;
 }
 
-.action-btn::after {
-  border: none;
+.menu-item:last-child { border-bottom: none; }
+.menu-item--hover { background: #faf6f1; }
+
+.menu-title {
+  font-size: 30rpx;
+  color: #2a241f;
+}
+
+.menu-title--danger { color: #c13515; }
+
+.menu-arrow {
+  font-size: 40rpx;
+  line-height: 1;
+  color: #cfc6bc;
 }
 </style>

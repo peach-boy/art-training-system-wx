@@ -37,7 +37,9 @@
       "path": "pages/attendance/list",
       "style": {
         "navigationBarTitleText": "课时",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 120
       }
     },
     {
@@ -49,7 +51,8 @@
     {
       "path": "pages/attendance/form",
       "style": {
-        "navigationBarTitleText": "录入课时"
+        "navigationBarTitleText": "录入课时",
+        "disableScroll": true
       }
     },
     {

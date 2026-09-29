@@ -1,7 +1,7 @@
-/** 移动端角色展示（教师 / 管理员） */
+/** 移动端角色展示（员工 / 管理员） */
 
 const SUB_LABELS = {
-  teacher: '授课教师',
+  teacher: '员工',
   admin: '门店管理员',
   finance_admin: '财务管理员',
   super_admin: '超级管理员'
@@ -20,14 +20,14 @@ const SUB_LABELS = {
  */
 export function getRoleDisplay(role) {
   const isTeacher = role === 'teacher'
-  const subLabel = SUB_LABELS[role] || (isTeacher ? '教师' : '管理员')
+  const subLabel = SUB_LABELS[role] || (isTeacher ? '员工' : '管理员')
 
   if (isTeacher) {
     return {
       isTeacher: true,
-      primaryLabel: '教师',
+      primaryLabel: '员工',
       subLabel,
-      workspaceTitle: '教师工作台',
+      workspaceTitle: '员工工作台',
       workspaceDesc: '录入课时、查看本人课表与学员',
       badgeTheme: 'teacher'
     }

@@ -1,5 +1,6 @@
 <template>
   <view class="form-page">
+    <BackBar />
     <view class="form-card">
       <view class="field">
         <text class="label">分类</text>
@@ -72,6 +73,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { financialEntryAPI } from '@/api'
+import BackBar from '@/components/BackBar.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { inputEventValue } from '@/utils/input'
 import {

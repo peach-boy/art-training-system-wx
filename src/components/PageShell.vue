@@ -2,6 +2,7 @@
   <view class="page-shell">
     <view class="page-shell__status" :style="{ height: statusBarHeight + 'px' }" />
     <view v-if="title" class="page-shell__header">
+      <BackBar v-if="showBack" />
       <text class="page-shell__title">{{ title }}</text>
       <view class="page-shell__extra">
         <slot name="extra" />
@@ -17,11 +18,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import AppTabBar from '@/components/AppTabBar.vue'
+import BackBar from '@/components/BackBar.vue'
 
-defineProps({
+const props = defineProps({
   title: { type: String, default: '' },
   tabBar: { type: Boolean, default: false },
-  tabActive: { type: String, default: 'home' }
+  tabActive: { type: String, default: 'home' },
+  showBack: { type: Boolean, default: true }
 })
 
 const statusBarHeight = ref(20)
@@ -45,8 +48,8 @@ onMounted(() => {
 .page-shell__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 32rpx 20rpx;
+  gap: 8rpx;
+  padding: 8rpx 24rpx 16rpx;
   background: var(--canvas);
   border-bottom: 1rpx solid var(--hairline);
 }

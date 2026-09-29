@@ -1,5 +1,6 @@
 <template>
   <view class="pkg-records">
+    <BackBar />
     <view v-if="loading" class="empty">加载中...</view>
     <view v-else-if="notFound" class="empty">课包不存在或无权查看</view>
     <template v-else-if="pkg">
@@ -44,7 +45,7 @@
           <text>{{ pkg.expiryDate || '—' }}</text>
         </view>
         <view v-if="pkg.assignedTeacherName" class="summary-row">
-          <text class="summary-label">归属老师</text>
+          <text class="summary-label">归属员工</text>
           <text>{{ pkg.assignedTeacherName }}</text>
         </view>
         <view v-if="pkg.notes" class="summary-notes">
@@ -73,11 +74,12 @@
               <text class="record-type">{{ labelOf(item.lessonType) }}</text>
             </view>
             <view class="record-meta">
+              <text>{{ storeLabel(item) }}</text>
               <text>{{ item.courseTypeName || '课程' }}</text>
               <text>扣 {{ formatClassHours(item.classesDeducted) }} 节</text>
             </view>
             <view v-if="item.coursewareName" class="record-extra">课件：{{ item.coursewareName }}</view>
-            <view v-if="item.teacherName" class="record-extra">老师：{{ item.teacherName }}</view>
+            <view v-if="item.teacherName" class="record-extra">员工：{{ item.teacherName }}</view>
             <view v-if="item.notes" class="record-notes">{{ item.notes }}</view>
             <text class="record-index">#{{ groupStartIndex(gi) + index + 1 }}</text>
           </view>
@@ -93,6 +95,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { coursePackageAPI, fetchPackageAttendanceRecords } from '@/api'
+import BackBar from '@/components/BackBar.vue'
 import { requireLogin } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
 import {
@@ -107,6 +110,9 @@ const pkg = ref(null)
 const records = ref([])
 const studentName = ref('')
 let packageId = ''
+
+const storeLabel = (item) =>
+  item?.storeName || (item?.storeId ? `店铺#${item.storeId}` : '—')
 
 onLoad((query) => {
   if (!requireLogin()) return

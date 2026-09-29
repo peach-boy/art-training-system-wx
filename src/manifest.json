@@ -1,13 +1,18 @@
 {
   "name": "ART教务移动版",
   "appid": "__UNI__ARTCMS",
-  "description": "ART 教务移动管理（教师 + 管理员）",
+  "description": "ART 教务移动管理（员工 + 管理员）",
   "versionName": "0.1.0",
   "versionCode": "100",
   "transformPx": false,
   "mp-weixin": {
     "appid": "wx990725d3b911a978",
     "__usePrivacyCheck__": true,
+    "permission": {
+      "scope.camera": {
+        "desc": "用于拍摄课堂照片并上传至课时记录"
+      }
+    },
     "setting": {
       "urlCheck": false,
       "es6": true,

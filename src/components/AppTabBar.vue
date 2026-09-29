@@ -11,9 +11,6 @@
         <text class="tab-icon">{{ item.icon }}</text>
         <text class="tab-label">{{ item.label }}</text>
       </view>
-      <view class="tab-fab" @tap="onAdd">
-        <text class="tab-fab-plus">+</text>
-      </view>
     </view>
     <view class="tab-bar-safe" />
   </view>
@@ -47,10 +44,6 @@ const tabs = computed(() => (userStore.isAdmin ? adminTabs : teacherTabs))
 function onSwitch(item) {
   if (item.key === props.active) return
   uni.reLaunch({ url: item.path })
-}
-
-function onAdd() {
-  uni.navigateTo({ url: '/pages/attendance/form?mode=create' })
 }
 </script>
 
@@ -92,29 +85,6 @@ function onAdd() {
 .tab-icon {
   font-size: 36rpx;
   line-height: 1;
-}
-
-.tab-fab {
-  position: absolute;
-  left: 50%;
-  top: -36rpx;
-  transform: translateX(-50%);
-  width: 108rpx;
-  height: 108rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f37021, #ff8534);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(243, 112, 33, 0.45);
-}
-
-.tab-fab-plus {
-  color: #fff;
-  font-size: 56rpx;
-  font-weight: 300;
-  line-height: 1;
-  margin-top: -4rpx;
 }
 
 .tab-bar-safe {
