@@ -47,6 +47,19 @@ export function shouldSkipSilentWechatLogin() {
   return uni.getStorageSync(SKIP_SILENT_LOGIN_KEY) === '1'
 }
 
+const PENDING_PC_TICKET_KEY = 'pendingPcLoginTicket'
+
+export function setPendingPcTicket(ticket) {
+  if (ticket) uni.setStorageSync(PENDING_PC_TICKET_KEY, ticket)
+  else uni.removeStorageSync(PENDING_PC_TICKET_KEY)
+}
+
+export function takePendingPcTicket() {
+  const ticket = uni.getStorageSync(PENDING_PC_TICKET_KEY) || ''
+  if (ticket) uni.removeStorageSync(PENDING_PC_TICKET_KEY)
+  return ticket
+}
+
 export function isLoggedIn() {
   return !!getToken()
 }

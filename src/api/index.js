@@ -16,6 +16,9 @@ export const authAPI = {
   },
   logout() {
     return request({ url: '/auth/logout', method: 'POST' })
+  },
+  confirmPcLogin(ticket) {
+    return request({ url: '/auth/wechat/pc/confirm', method: 'POST', data: { ticket } })
   }
 }
 

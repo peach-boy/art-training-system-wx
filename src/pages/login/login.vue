@@ -43,7 +43,39 @@
           登录即表示同意
           <text class="login-tip-link" @tap="openPrivacyContract">{{ privacyContractName }}</text>
         </text>
+        <text class="demo-entry" @tap="openDemoLogin">体验账号登录</text>
       </view>
+
+      <view v-if="showDemo" class="privacy-mask" @tap="closeDemoLogin">
+        <view class="demo-box" @tap.stop>
+          <text class="privacy-title">体验账号登录</text>
+          <text class="privacy-desc">供审核和演示使用，请输入体验账号的手机号和密码。</text>
+          <input
+            class="field-input demo-input"
+            type="number"
+            maxlength="11"
+            :value="account"
+            placeholder="体验账号手机号"
+            placeholder-class="field-ph"
+            :adjust-position="true"
+            @input="account = inputEventValue($event)"
+          />
+          <input
+            class="field-input demo-input"
+            password
+            :value="password"
+            placeholder="密码"
+            placeholder-class="field-ph"
+            :adjust-position="true"
+            @input="password = inputEventValue($event)"
+          />
+          <button class="btn-wechat demo-submit" :loading="loading" :disabled="loading" @tap="handleDemoLogin">
+            登录
+          </button>
+          <button class="btn-privacy-cancel" @tap="closeDemoLogin">取消</button>
+        </view>
+      </view>
+
       <view v-if="showPrivacy" class="privacy-mask" @tap.stop>
         <view class="privacy-box">
           <text class="privacy-title">隐私保护提示</text>
@@ -155,7 +187,43 @@ const icpNumber = ICP_NUMBER
 const isDevtools = ref(false)
 const privacyContractName = ref('')
 const showPrivacy = ref(false)
+const showDemo = ref(false)
 let resolvePrivacyAuthorization = null
+
+function openDemoLogin() {
+  loginError.value = ''
+  showDemo.value = true
+}
+
+function closeDemoLogin() {
+  showDemo.value = false
+  password.value = ''
+}
+
+/** 体验账号：员工手机号 + 密码（不需要验证码），供小程序审核和演示使用 */
+async function handleDemoLogin() {
+  if (loading.value) return
+  const acc = (account.value || '').trim()
+  if (!PHONE_PATTERN.test(acc) || !password.value) {
+    uni.showToast({ title: '请填写11位手机号和密码', icon: 'none' })
+    return
+  }
+  loading.value = true
+  try {
+    loginSeq += 1
+    const data = await authAPI.mobileLogin({ account: acc, password: password.value })
+    setSkipSilentWechatLogin(false)
+    showDemo.value = false
+    password.value = ''
+    userStore.applyLogin(data)
+    uni.showToast({ title: '登录成功', icon: 'success' })
+    setTimeout(() => navigateAfterLogin(data.role), 400)
+  } catch (e) {
+    uni.showToast({ title: e.message || '登录失败', icon: 'none', duration: 2500 })
+  } finally {
+    loading.value = false
+  }
+}
 // #endif
 
 const needCaptcha = computed(() => {
@@ -610,6 +678,33 @@ $orange: #f37021;
   font-size: 23rpx;
   color: $muted;
   line-height: 1.6;
+}
+
+.demo-entry {
+  display: block;
+  margin-top: 28rpx;
+  padding: 12rpx 0;
+  text-align: center;
+  font-size: 22rpx;
+  color: #b7aea4;
+}
+
+.demo-box {
+  width: 100%;
+  max-width: 620rpx;
+  background: #fff;
+  border-radius: 36rpx;
+  padding: 44rpx 36rpx 32rpx;
+}
+
+.demo-input {
+  margin-bottom: 20rpx;
+}
+
+.demo-submit {
+  margin-top: 12rpx;
+  height: 92rpx;
+  line-height: 92rpx;
 }
 
 .login-tip--warn {

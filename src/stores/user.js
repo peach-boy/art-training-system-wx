@@ -9,7 +9,8 @@ import {
   getCurrentStoreId,
   setCurrentStoreId,
   clearAuth,
-  isLoggedIn as storageIsLoggedIn
+  isLoggedIn as storageIsLoggedIn,
+  takePendingPcTicket
 } from '@/utils/storage'
 import { notifyStoreChanged } from '@/utils/storeEvents'
 
@@ -107,5 +108,10 @@ export function requireLogin() {
 }
 
 export function navigateAfterLogin() {
+  const ticket = takePendingPcTicket()
+  if (ticket) {
+    uni.reLaunch({ url: '/pages/pc-confirm/index?scene=' + encodeURIComponent(ticket) })
+    return
+  }
   uni.reLaunch({ url: '/pages/home/index' })
 }
