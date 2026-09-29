@@ -19,8 +19,8 @@
 
     <view v-else class="card">
       <text class="kicker">电脑登录确认</text>
-      <text class="title">以 {{ userStore.displayName }} 登录</text>
-      <text class="desc">确认后，电脑浏览器会进入这个账号。手机上的登录不受影响。</text>
+      <text class="title">以管理员身份登录</text>
+      <text class="desc">电脑端只匹配管理员手机号。教师身份不能登录电脑；你的手机号须已写在管理员资料里。</text>
       <view class="btn" :class="{ 'btn--off': confirming }" @tap="confirm">
         {{ confirming ? '确认中…' : '确认登录' }}
       </view>

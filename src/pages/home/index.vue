@@ -148,6 +148,10 @@ const showAdminStats = computed(
 
 onShow(() => {
   if (!requireLogin()) return
+  if (userStore.role === 'parent') {
+    uni.reLaunch({ url: '/pages/parent/home' })
+    return
+  }
   loadStats()
 })
 

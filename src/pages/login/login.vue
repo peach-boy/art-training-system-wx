@@ -20,23 +20,31 @@
     <view class="login-body">
       <!-- #ifdef MP-WEIXIN -->
       <view class="login-form login-form--wechat">
-        <text class="form-title">欢迎回来</text>
-        <text class="form-desc">使用微信绑定的手机号快速登录，无需记密码</text>
+        <text class="form-title">选择身份登录</text>
+        <text class="form-desc">微信手机号只匹配你选中的那一类账号</text>
+
+        <view class="role-list">
+          <view
+            v-for="item in loginRoles"
+            :key="item.value"
+            class="role-card"
+            :class="{ active: loginType === item.value }"
+            @tap="chooseLoginType(item.value)"
+          >
+            <text class="role-card__name">{{ item.label }}</text>
+            <text class="role-card__desc">{{ item.desc }}</text>
+          </view>
+        </view>
 
         <button
+          v-if="loginType"
           class="btn-wechat"
           open-type="getPhoneNumber"
           @getphonenumber="onGetPhoneNumber"
         >
-          <text class="btn-wechat__icon">☎</text>
-          <text>微信手机号一键登录</text>
+          <text>授权手机号，以{{ loginTypeLabel }}登录</text>
         </button>
         <text v-if="loginError" class="login-error">{{ loginError }}</text>
-
-        <view class="login-points">
-          <text class="login-point">员工 / 管理员通用</text>
-          <text class="login-point">号码需已在系统登记</text>
-        </view>
 
         <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在手机微信中操作。</text>
         <text v-if="privacyContractName" class="login-tip">
@@ -181,7 +189,14 @@ const captchaCode = ref('')
 const captchaImage = ref('')
 const loading = ref(false)
 const loginError = ref('')
+const loginType = ref('')
+const loginRoles = [
+  { value: 'admin', label: '管理员', desc: '匹配管理员资料里的手机号' },
+  { value: 'teacher', label: '教师', desc: '匹配教师资料里的手机号' },
+  { value: 'parent', label: '家长', desc: '匹配学员联系电话' }
+]
 let loginSeq = 0
+const loginTypeLabel = computed(() => loginRoles.find((item) => item.value === loginType.value)?.label || '')
 const icpNumber = ICP_NUMBER
 // #ifdef MP-WEIXIN
 const isDevtools = ref(false)
@@ -267,7 +282,7 @@ onMounted(() => {
     /* ignore */
   }
   if (isLoggedIn()) {
-    uni.reLaunch({ url: '/pages/home/index' })
+    navigateAfterLogin(userStore.role)
     return
   }
   // #ifdef MP-WEIXIN
@@ -280,11 +295,18 @@ onMounted(() => {
     /* ignore */
   }
   setupPrivacyAuth()
-  if (!shouldSkipSilent()) {
-    trySilentWechatLogin()
-  }
   // #endif
 })
+
+function chooseLoginType(type) {
+  if (loginType.value === type) return
+  loginSeq += 1
+  loginType.value = type
+  loginError.value = ''
+  if (type !== 'parent' && !shouldSkipSilent()) {
+    trySilentWechatLogin()
+  }
+}
 
 function wxLoginCode() {
   return new Promise((resolve, reject) => {
@@ -305,7 +327,7 @@ async function trySilentWechatLogin() {
   try {
     const loginCode = await wxLoginCode()
     if (seq !== loginSeq) return
-    const data = await authAPI.wechatMiniProgramLogin({ loginCode })
+    const data = await authAPI.wechatMiniProgramLogin({ loginCode, loginType: loginType.value })
     if (seq !== loginSeq) return
     userStore.applyLogin(data)
     navigateAfterLogin(data.role)
@@ -443,7 +465,8 @@ async function onGetPhoneNumber(e) {
     const loginCode = await wxLoginCode()
     const data = await authAPI.wechatMiniProgramLogin({
       loginCode,
-      phoneCode: detail.code
+      phoneCode: detail.code,
+      loginType: loginType.value
     })
     if (seq !== loginSeq) return
     setSkipSilentWechatLogin(false)
@@ -615,9 +638,42 @@ $orange: #f37021;
 
 .form-desc {
   display: block;
-  margin: 10rpx 0 40rpx;
+  margin: 10rpx 0 28rpx;
   font-size: 26rpx;
   line-height: 1.5;
+  color: $muted;
+}
+
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+}
+
+.role-card {
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: #f8f4ef;
+  border: 2rpx solid transparent;
+}
+
+.role-card.active {
+  background: #fff6ee;
+  border-color: #f37021;
+}
+
+.role-card__name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $ink;
+}
+
+.role-card__desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
   color: $muted;
 }
 

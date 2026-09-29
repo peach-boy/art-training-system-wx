@@ -107,10 +107,14 @@ export function requireLogin() {
   return true
 }
 
-export function navigateAfterLogin() {
+export function navigateAfterLogin(role) {
   const ticket = takePendingPcTicket()
   if (ticket) {
     uni.reLaunch({ url: '/pages/pc-confirm/index?scene=' + encodeURIComponent(ticket) })
+    return
+  }
+  if (role === 'parent') {
+    uni.reLaunch({ url: '/pages/parent/home' })
     return
   }
   uni.reLaunch({ url: '/pages/home/index' })

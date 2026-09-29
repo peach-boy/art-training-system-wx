@@ -19,6 +19,9 @@ export const authAPI = {
   },
   confirmPcLogin(ticket) {
     return request({ url: '/auth/wechat/pc/confirm', method: 'POST', data: { ticket } })
+  },
+  parentStudents() {
+    return request({ url: '/auth/parent/students', method: 'GET' })
   }
 }
 

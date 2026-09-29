@@ -1,16 +1,23 @@
 {
   "pages": [
     {
-      "path": "pages/pc-confirm/index",
-      "style": {
-        "navigationBarTitleText": "确认电脑登录"
-      }
-    },
-    {
       "path": "pages/login/login",
       "style": {
         "navigationBarTitleText": "登录",
         "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/parent/home",
+      "style": {
+        "navigationBarTitleText": "家长",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/pc-confirm/index",
+      "style": {
+        "navigationBarTitleText": "确认电脑登录"
       }
     },
     {
