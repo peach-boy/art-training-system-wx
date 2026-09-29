@@ -1,45 +1,51 @@
 <template>
   <PageShell title="学员" :tab-bar="true" tab-active="students">
-    <view class="search card">
+    <view class="search">
       <input
         v-model="keyword"
         class="search-input"
-        placeholder="搜索学员姓名"
+        placeholder="搜索学员：姓名 / 小名"
+        placeholder-class="search-ph"
         confirm-type="search"
         @confirm="reload"
       />
-      <button class="search-btn" size="mini" @tap="reload">搜索</button>
+      <view class="search-go" hover-class="search-go--hover" @tap="reload">搜索</view>
     </view>
 
-    <scroll-view
-      scroll-y
-      class="list-scroll"
-      refresher-enabled
-      :refresher-triggered="refreshing"
-      @refresherrefresh="onRefresh"
-      @scrolltolower="loadMore"
+    <view v-if="!loading || list.length" class="count">共 <text class="count-num">{{ total }}</text> 位学员</view>
+
+    <view v-if="loading && list.length === 0" class="empty">加载中…</view>
+    <view v-else-if="list.length === 0" class="empty">没有找到学员</view>
+
+    <view
+      v-for="item in list"
+      :key="item.studentId"
+      class="stu"
+      :class="'stu--' + (item.feeStatus || 'normal')"
+      hover-class="stu--hover"
+      @tap="goDetail(item)"
     >
-      <view v-if="loading && list.length === 0" class="empty">加载中...</view>
-      <view v-else-if="list.length === 0" class="empty">暂无学员</view>
-      <view v-for="item in list" :key="item.studentId" class="stu card" @tap="goDetail(item)">
+      <view class="stu-avatar">{{ (item.name || '学').slice(0, 1) }}</view>
+      <view class="stu-main">
         <view class="stu-head">
           <text class="stu-name">{{ item.name }}</text>
-          <text class="stu-tag" :class="'stu-tag--' + (item.feeStatus || 'normal')">
-            {{ feeLabel(item.feeStatus) }}
-          </text>
+          <text class="stu-tag" :class="'stu-tag--' + (item.feeStatus || 'normal')">{{ feeLabel(item.feeStatus) }}</text>
         </view>
         <view class="stu-meta">
-          <text>剩余 {{ item.latestRemainingClasses ?? '—' }} 节</text>
+          <text>剩余 <text class="stu-remain">{{ item.latestRemainingClasses ?? '—' }}</text> 节</text>
           <text>{{ item.phone || '无电话' }}</text>
         </view>
       </view>
-    </scroll-view>
+      <text class="stu-arrow">›</text>
+    </view>
+
+    <view v-if="list.length" class="more">{{ hasMore ? '上拉加载更多' : '已显示全部' }}</view>
   </PageShell>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
@@ -96,11 +102,14 @@ async function reload() {
   }
 }
 
-async function onRefresh() {
-  refreshing.value = true
+onPullDownRefresh(async () => {
   await reload()
-  refreshing.value = false
-}
+  uni.stopPullDownRefresh()
+})
+
+onReachBottom(() => {
+  loadMore()
+})
 
 async function loadMore() {
   if (!hasMore.value || loading.value) return
@@ -118,78 +127,169 @@ function goDetail(item) {
 </script>
 
 <style lang="scss" scoped>
-.card {
-  background: var(--canvas);
-  border-radius: var(--radius-md);
-  border: 1rpx solid var(--hairline);
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-}
+$ink: #2a241f;
+$muted: #8a8178;
 
 .search {
   display: flex;
-  gap: 16rpx;
   align-items: center;
+  height: 88rpx;
+  padding: 0 8rpx 0 28rpx;
+  margin-bottom: 20rpx;
+  background: #fff;
+  border: 2rpx solid #dbe3ff;
+  border-radius: 999rpx;
+  box-shadow: 0 6rpx 20rpx rgba(47, 84, 235, 0.06);
 }
 
 .search-input {
   flex: 1;
-  height: 72rpx;
-  padding: 0 20rpx;
-  background: var(--bg-page);
-  border-radius: var(--radius-sm);
+  min-width: 0;
+  height: 100%;
   font-size: 28rpx;
+  color: $ink;
 }
 
-.search-btn {
-  background: var(--primary);
+.search-ph {
+  font-size: 26rpx;
+  color: #b7aea4;
+}
+
+.search-go {
+  flex-shrink: 0;
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 38rpx;
+  font-size: 27rpx;
+  font-weight: 600;
   color: #fff;
+  background: #2f54eb;
+  border-radius: 999rpx;
 }
 
-.list-scroll {
-  height: calc(100vh - 320rpx);
+.search-go--hover { opacity: 0.85; }
+
+.count {
+  padding: 0 8rpx 16rpx;
+  font-size: 24rpx;
+  color: $muted;
+}
+
+.count-num {
+  color: #2f54eb;
+  font-weight: 700;
+  font-size: 30rpx;
+  padding: 0 4rpx;
+}
+
+.stu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+  padding: 24rpx 24rpx 24rpx 32rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8rpx;
+    background: #4c9a2a;
+  }
+}
+
+.stu--overdue::before { background: #c13515; }
+.stu--warning::before { background: #d46b08; }
+.stu--not_started::before { background: #b7aea4; }
+.stu--hover { background: #fbf8f5; }
+
+.stu-avatar {
+  flex-shrink: 0;
+  width: 84rpx;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #2f54eb;
+  background: rgba(47, 84, 235, 0.1);
+  border-radius: 28rpx;
+}
+
+.stu-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .stu-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  gap: 12rpx;
 }
 
 .stu-name {
-  font-size: 30rpx;
-  font-weight: 600;
+  min-width: 0;
+  font-size: 31rpx;
+  font-weight: 700;
+  color: $ink;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stu-tag {
-  font-size: 22rpx;
-  padding: 4rpx 12rpx;
-  border-radius: var(--radius-full);
-  background: var(--bg-page);
-  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: 21rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  color: #3b7d1f;
+  background: rgba(76, 154, 42, 0.14);
 }
 
-.stu-tag--overdue {
-  background: rgba(193, 53, 21, 0.1);
-  color: #c13515;
-}
-
-.stu-tag--warning {
-  background: rgba(212, 107, 8, 0.1);
-  color: #d46b08;
-}
+.stu-tag--overdue { color: #c13515; background: rgba(193, 53, 21, 0.1); }
+.stu-tag--warning { color: #d46b08; background: rgba(212, 107, 8, 0.12); }
+.stu-tag--not_started { color: $muted; background: #f1ece6; }
 
 .stu-meta {
   display: flex;
   justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 10rpx;
   font-size: 24rpx;
-  color: var(--text-muted);
+  color: $muted;
+}
+
+.stu-remain {
+  font-weight: 700;
+  color: #f37021;
+  font-size: 28rpx;
+}
+
+.stu-arrow {
+  flex-shrink: 0;
+  font-size: 40rpx;
+  line-height: 1;
+  color: #cfc6bc;
 }
 
 .empty {
   text-align: center;
-  padding: 60rpx;
-  color: var(--text-muted);
+  padding: 80rpx 0;
+  color: $muted;
+  font-size: 26rpx;
+}
+
+.more {
+  text-align: center;
+  padding: 16rpx 0 8rpx;
+  font-size: 24rpx;
+  color: #b7aea4;
 }
 </style>

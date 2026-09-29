@@ -19,6 +19,16 @@ const SUB_LABELS = {
  * }}
  */
 export function getRoleDisplay(role) {
+  if (role === 'parent') {
+    return {
+      isTeacher: false,
+      primaryLabel: '家长',
+      subLabel: '家长',
+      workspaceTitle: '家长中心',
+      workspaceDesc: '查看孩子的课包和课时',
+      badgeTheme: 'parent'
+    }
+  }
   const isTeacher = role === 'teacher'
   const subLabel = SUB_LABELS[role] || (isTeacher ? '员工' : '管理员')
 

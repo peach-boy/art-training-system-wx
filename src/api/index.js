@@ -22,6 +22,12 @@ export const authAPI = {
   },
   parentStudents() {
     return request({ url: '/auth/parent/students', method: 'GET' })
+  },
+  parentPackages(studentId) {
+    return request({ url: `/auth/parent/students/${studentId}/packages`, method: 'GET' })
+  },
+  parentAttendance(studentId) {
+    return request({ url: `/auth/parent/students/${studentId}/attendance`, method: 'GET' })
   }
 }
 

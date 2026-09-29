@@ -64,7 +64,7 @@ onMounted(() => {
   padding: 24rpx 24rpx 32rpx;
 
   &.has-tab {
-    padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+    padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
   }
 }
 </style>

@@ -11,7 +11,14 @@
       "path": "pages/parent/home",
       "style": {
         "navigationBarTitleText": "家长",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/parent/records",
+      "style": {
+        "navigationBarTitleText": "课包和课时"
       }
     },
     {
@@ -31,7 +38,9 @@
       "path": "pages/students/list",
       "style": {
         "navigationBarTitleText": "学员",
-        "navigationStyle": "custom"
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 120
       }
     },
     {

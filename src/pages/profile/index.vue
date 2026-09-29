@@ -1,6 +1,6 @@
 <template>
   <PageShell title="我的" :tab-bar="true" tab-active="profile">
-    <view class="profile">
+    <view class="profile" :class="'profile--' + themeName">
       <view class="avatar">{{ avatarText }}</view>
       <text class="name">{{ userStore.displayName }}</text>
       <text class="role">{{ roleLabel }}</text>
@@ -9,7 +9,7 @@
 
     <view class="menu">
       <view class="menu-item" hover-class="menu-item--hover" @tap="goHome">
-        <text class="menu-title">返回首页</text>
+        <text class="menu-title">{{ userStore.role === 'parent' ? '我的孩子' : '返回首页' }}</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="menu-item--hover" @tap="onLogout">
@@ -36,7 +36,13 @@ const roleDisplay = computed(() => getRoleDisplay(userStore.role))
 
 const roleLabel = computed(() => {
   const d = roleDisplay.value
+  if (userStore.role === 'parent') return '家长'
   return `${d.primaryLabel} · ${d.subLabel}`
+})
+
+const themeName = computed(() => {
+  if (userStore.role === 'parent') return 'green'
+  return userStore.isAdmin ? 'blue' : 'orange'
 })
 
 onShow(() => {
@@ -44,7 +50,7 @@ onShow(() => {
 })
 
 function goHome() {
-  uni.reLaunch({ url: '/pages/home/index' })
+  uni.reLaunch({ url: userStore.role === 'parent' ? '/pages/parent/home' : '/pages/home/index' })
 }
 
 function onLogout() {
@@ -100,6 +106,18 @@ function onLogout() {
   color: #f37021;
   background: rgba(243, 112, 33, 0.12);
   border-radius: 999rpx;
+}
+
+.profile--blue {
+  background: linear-gradient(180deg, #eaf0ff 0%, #fff 100%);
+  .avatar { background: linear-gradient(135deg, #2f54eb, #6f8dff); }
+  .role { color: #2f54eb; background: rgba(47, 84, 235, 0.11); }
+}
+
+.profile--green {
+  background: linear-gradient(180deg, #e6f7ec 0%, #fff 100%);
+  .avatar { background: linear-gradient(135deg, #16a34a, #4cc777); }
+  .role { color: #16a34a; background: rgba(22, 163, 74, 0.12); }
 }
 
 .account {
