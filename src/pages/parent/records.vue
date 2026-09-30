@@ -2,19 +2,13 @@
   <view class="page">
     <view class="head">
       <view class="head-avatar">{{ (studentName || '学').slice(0, 1) }}</view>
-      <view class="head-main">
-        <text class="title">{{ studentName || '学员' }}</text>
-        <text class="sub">共 {{ packages.length }} 个课包 · {{ records.length }} 次课时</text>
-      </view>
+      <text class="title">{{ studentName || '学员' }}</text>
+      <text class="sub">{{ packages.length }} 个课包 · {{ records.length }} 节课</text>
     </view>
 
     <view class="seg">
-      <view class="seg-item" :class="{ active: tab === 'package' }" @tap="tab = 'package'">
-        课包记录
-      </view>
-      <view class="seg-item" :class="{ active: tab === 'attendance' }" @tap="tab = 'attendance'">
-        课时记录
-      </view>
+      <view class="seg-item" :class="{ active: tab === 'package' }" @tap="tab = 'package'">课包记录</view>
+      <view class="seg-item" :class="{ active: tab === 'attendance' }" @tap="tab = 'attendance'">课时记录</view>
     </view>
 
     <view v-if="loading" class="empty">加载中…</view>
@@ -26,14 +20,28 @@
           <text class="name">{{ pkg.packageName || '课包' }}</text>
           <text class="tag" :class="'tag--' + statusKind(pkg.status)">{{ statusText(pkg.status) }}</text>
         </view>
-        <view class="remain">
-          <text class="remain-num">{{ hours(pkg.remainingClasses) }}</text>
-          <text class="remain-total"> / {{ hours(pkg.totalClasses) }} 节</text>
+        <view class="remain-row">
+          <view class="remain">
+            <text class="remain-label">剩余</text>
+            <text class="remain-num">{{ hours(pkg.remainingClasses) }}</text>
+            <text class="remain-total">/ {{ hours(pkg.totalClasses) }} 节</text>
+          </view>
+          <text v-if="pkg.expiryDate" class="meta">至 {{ pkg.expiryDate }}</text>
         </view>
         <view class="bar">
           <view class="bar-fill" :style="{ width: percent(pkg) + '%' }" />
         </view>
-        <view v-if="pkg.expiryDate" class="meta">有效期至 {{ pkg.expiryDate }}</view>
+        <view class="export-row">
+          <text class="export-count">已上课 {{ recordsOfPackage(pkg).length }} 节</text>
+          <view
+            class="export-btn"
+            :class="{ 'export-btn--busy': exportingId === pkg.packageId }"
+            hover-class="export-btn--hover"
+            @tap="exportPackage(pkg)"
+          >
+            {{ exportingId === pkg.packageId ? '生成中…' : '导出图片' }}
+          </view>
+        </view>
       </view>
     </template>
 
@@ -41,21 +49,24 @@
       <view v-if="!records.length" class="empty">暂无课时记录</view>
       <view v-for="group in groups" :key="group.date" class="group">
         <text class="group-date">{{ group.date }}</text>
-        <view v-for="item in group.items" :key="item.recordId" class="card card--rec">
-          <view class="row">
-            <text class="name">{{ item.courseTypeName || '课程' }}</text>
-            <text class="deduct">-{{ hours(item.classesDeducted) }} 节</text>
-          </view>
-          <view class="chips">
-            <text class="chip">{{ lessonLabel(item.lessonType) }}</text>
-            <text v-if="item.teacherName" class="chip chip--muted">{{ item.teacherName }} 老师</text>
-            <text v-if="item.packageName" class="chip chip--muted">{{ item.packageName }}</text>
-          </view>
-          <text v-if="item.coursewareName" class="note">课件：{{ item.coursewareName }}</text>
-          <text v-if="item.notes" class="note">备注：{{ item.notes }}</text>
-          <view v-if="photoOf(item)" class="photo-wrap" @tap="previewPhoto(item)">
-            <image class="photo" :src="photoOf(item)" mode="aspectFill" lazy-load />
-            <text class="photo-tip">课堂照片 · 点击查看</text>
+        <view class="group-card">
+          <view v-for="item in group.items" :key="item.recordId" class="rec">
+            <view class="rec-main">
+              <view class="rec-top">
+                <text class="name">{{ item.courseTypeName || '课程' }}</text>
+                <text class="deduct">-{{ hours(item.classesDeducted) }}</text>
+              </view>
+              <text class="rec-meta">{{ recMeta(item) }}</text>
+              <text v-if="item.notes" class="rec-note">{{ item.notes }}</text>
+            </view>
+            <image
+              v-if="photoOf(item)"
+              class="thumb"
+              :src="photoOf(item)"
+              mode="aspectFill"
+              lazy-load
+              @tap="previewPhoto(item)"
+            />
           </view>
         </view>
       </view>
@@ -71,6 +82,7 @@ import { requireLogin, useUserStore } from '@/stores/user'
 import { formatClassHours } from '@/utils/classHours'
 import { labelOf } from '@/utils/lessonType'
 import { imageFullUrl } from '@/utils/media'
+import { generatePackageReport, shareReportImage } from '@/utils/packageReport'
 
 const userStore = useUserStore()
 const studentName = ref('')
@@ -78,6 +90,7 @@ const tab = ref('package')
 const loading = ref(true)
 const packages = ref([])
 const records = ref([])
+const exportingId = ref(null)
 
 const groups = computed(() => {
   const map = new Map()
@@ -95,6 +108,37 @@ function hours(value) {
 
 function lessonLabel(type) {
   return labelOf(type)
+}
+
+function recordsOfPackage(pkg) {
+  return records.value.filter((r) => r.packageId === pkg.packageId)
+}
+
+async function exportPackage(pkg) {
+  if (exportingId.value) return
+  const rows = recordsOfPackage(pkg)
+  if (!rows.length) {
+    uni.showToast({ title: '该课包暂无上课记录', icon: 'none' })
+    return
+  }
+  exportingId.value = pkg.packageId
+  uni.showLoading({ title: '生成中…', mask: true })
+  try {
+    const path = await generatePackageReport(pkg, studentName.value, rows)
+    uni.hideLoading()
+    shareReportImage(path)
+  } catch (e) {
+    uni.hideLoading()
+    uni.showToast({ title: e.message || '生成失败', icon: 'none' })
+  } finally {
+    exportingId.value = null
+  }
+}
+
+function recMeta(item) {
+  return [lessonLabel(item.lessonType), item.teacherName ? `${item.teacherName}老师` : '', item.coursewareName]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function photoOf(item) {
@@ -163,7 +207,7 @@ $green: #16a34a;
 
 .page {
   min-height: 100vh;
-  padding: 24rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
   background: #f6f2ec;
   box-sizing: border-box;
 }
@@ -171,44 +215,39 @@ $green: #16a34a;
 .head {
   display: flex;
   align-items: center;
-  gap: 22rpx;
-  margin-bottom: 24rpx;
+  gap: 14rpx;
+  margin-bottom: 16rpx;
 }
 
 .head-avatar {
   flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  line-height: 88rpx;
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
   text-align: center;
-  font-size: 36rpx;
+  font-size: 26rpx;
   font-weight: 800;
   color: #fff;
   background: linear-gradient(135deg, #16a34a, #4cc777);
-  border-radius: 30rpx;
-}
-
-.head-main {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
+  border-radius: 20rpx;
 }
 
 .title {
-  font-size: 38rpx;
+  font-size: 32rpx;
   font-weight: 800;
   color: $ink;
 }
 
 .sub {
-  font-size: 24rpx;
+  margin-left: auto;
+  font-size: 22rpx;
   color: $muted;
 }
 
 .seg {
   display: flex;
-  padding: 8rpx;
-  margin-bottom: 24rpx;
+  padding: 6rpx;
+  margin-bottom: 16rpx;
   background: #ebe4dc;
   border-radius: 999rpx;
 }
@@ -216,47 +255,49 @@ $green: #16a34a;
 .seg-item {
   flex: 1;
   text-align: center;
-  height: 72rpx;
-  line-height: 72rpx;
-  font-size: 28rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
   color: $muted;
   border-radius: 999rpx;
-  transition: all 0.2s;
 }
 
 .seg-item.active {
   color: $green;
   font-weight: 700;
   background: #fff;
-  box-shadow: 0 4rpx 14rpx rgba(42, 36, 31, 0.1);
+  box-shadow: 0 3rpx 10rpx rgba(42, 36, 31, 0.1);
 }
 
 .card {
-  margin-bottom: 18rpx;
-  padding: 28rpx;
+  margin-bottom: 12rpx;
+  padding: 20rpx 24rpx;
   background: #fff;
-  border-radius: 26rpx;
-  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(42, 36, 31, 0.04);
 }
 
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .name {
   min-width: 0;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: $ink;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tag {
   flex-shrink: 0;
-  padding: 4rpx 16rpx;
-  font-size: 22rpx;
+  padding: 2rpx 14rpx;
+  font-size: 21rpx;
   border-radius: 999rpx;
 }
 
@@ -264,24 +305,44 @@ $green: #16a34a;
 .tag--warn { color: #d46b08; background: rgba(212, 107, 8, 0.12); }
 .tag--end { color: $muted; background: #f1ece6; }
 
+.remain-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 10rpx;
+}
+
 .remain {
-  margin-top: 20rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+
+.remain-label {
+  font-size: 22rpx;
+  color: $muted;
 }
 
 .remain-num {
-  font-size: 56rpx;
+  font-size: 40rpx;
   font-weight: 800;
+  line-height: 1.1;
   color: #f37021;
 }
 
 .remain-total {
-  font-size: 26rpx;
+  font-size: 22rpx;
+  color: $muted;
+}
+
+.meta {
+  font-size: 22rpx;
   color: $muted;
 }
 
 .bar {
-  height: 12rpx;
-  margin-top: 14rpx;
+  height: 8rpx;
+  margin-top: 10rpx;
   background: #f1ece6;
   border-radius: 999rpx;
   overflow: hidden;
@@ -293,86 +354,104 @@ $green: #16a34a;
   border-radius: 999rpx;
 }
 
-.meta {
-  margin-top: 16rpx;
-  font-size: 24rpx;
+.export-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.export-count {
+  font-size: 22rpx;
   color: $muted;
 }
 
+.export-btn {
+  padding: 6rpx 22rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #f37021;
+  border: 2rpx solid #f37021;
+  border-radius: 999rpx;
+}
+
+.export-btn--hover { background: #fff3e8; }
+.export-btn--busy { opacity: 0.5; }
+
 .group-date {
   display: block;
-  margin: 24rpx 8rpx 14rpx;
-  font-size: 26rpx;
+  margin: 14rpx 6rpx 8rpx;
+  font-size: 22rpx;
   font-weight: 700;
   color: $muted;
 }
 
-.card--rec {
-  padding: 24rpx 28rpx;
+.group-card {
+  background: #fff;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(42, 36, 31, 0.04);
+  overflow: hidden;
+}
+
+.rec {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  border-bottom: 1rpx solid #f3eee8;
+}
+
+.rec:last-child { border-bottom: none; }
+
+.rec-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
 }
 
 .deduct {
   flex-shrink: 0;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 800;
   color: #f37021;
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 14rpx;
-}
-
-.chip {
-  padding: 4rpx 16rpx;
+.rec-meta {
+  display: block;
+  margin-top: 4rpx;
   font-size: 22rpx;
-  color: $green;
-  background: rgba(22, 163, 74, 0.1);
-  border-radius: 999rpx;
-}
-
-.chip--muted {
   color: $muted;
-  background: #f1ece6;
-}
-
-.note {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  line-height: 1.5;
-  color: $muted;
-}
-
-.photo-wrap {
-  position: relative;
-  margin-top: 18rpx;
-  border-radius: 20rpx;
   overflow: hidden;
-  background: #f1ece6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.photo {
+.rec-note {
   display: block;
-  width: 100%;
-  height: 360rpx;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: $muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.photo-tip {
-  position: absolute;
-  left: 16rpx;
-  bottom: 16rpx;
-  padding: 4rpx 16rpx;
-  font-size: 21rpx;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 999rpx;
+.thumb {
+  flex-shrink: 0;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 14rpx;
+  background: #f1ece6;
 }
 
 .empty {
-  padding: 80rpx 0;
+  padding: 60rpx 0;
   text-align: center;
   color: $muted;
   font-size: 26rpx;

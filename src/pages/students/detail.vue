@@ -77,10 +77,6 @@
           </view>
         </view>
 
-        <view class="actions">
-          <button class="btn-primary" @tap="goAttendance">全部课时记录</button>
-          <button class="btn-secondary" @tap="goAddLesson">录入课时</button>
-        </view>
       </view>
 
       <!-- 课包列表 -->
@@ -126,13 +122,22 @@
             </view>
             <view v-if="pkg.notes" class="pkg-notes">{{ pkg.notes }}</view>
             <view class="pkg-action">
-              <text>课时核对 ›</text>
+              <text>上课记录 · 导出图片 ›</text>
             </view>
           </view>
         </view>
       </view>
     </template>
     <view v-else class="empty">学员不存在</view>
+
+    <view v-if="student && !loading" class="action-bar">
+      <view class="action-btn action-btn--ghost" hover-class="action-btn--hover" @tap="goAttendance">
+        全部课时记录
+      </view>
+      <view class="action-btn action-btn--solid" hover-class="action-btn--hover" @tap="goAddLesson">
+        录入课时
+      </view>
+    </view>
   </view>
 </template>
 
@@ -244,7 +249,7 @@ function goPackageRecords(pkg) {
 .stu-detail {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-bottom: 48rpx;
+  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
 }
 
 .hero {
@@ -385,30 +390,45 @@ function goPackageRecords(pkg) {
   font-weight: 600;
 }
 
-.actions {
-  padding: 0 24rpx;
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
   display: flex;
-  flex-direction: column;
   gap: 20rpx;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  box-shadow: 0 -6rpx 24rpx rgba(42, 36, 31, 0.08);
 }
 
-.btn-primary,
-.btn-secondary {
+.action-btn {
+  flex: 1;
   height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 44rpx;
-  font-size: 30rpx;
+  line-height: 84rpx;
+  text-align: center;
+  font-size: 29rpx;
+  font-weight: 700;
+  border-radius: 999rpx;
+  box-sizing: border-box;
 }
 
-.btn-primary {
-  background: var(--primary);
+.action-btn--ghost {
+  color: #f37021;
+  background: #fff;
+  border: 3rpx solid #f37021;
+}
+
+.action-btn--solid {
   color: #fff;
+  background: linear-gradient(135deg, #f37021, #ff8a3d);
+  border: 3rpx solid transparent;
+  line-height: 82rpx;
+  box-shadow: 0 8rpx 20rpx rgba(243, 112, 33, 0.3);
 }
 
-.btn-secondary {
-  background: var(--primary-light);
-  color: var(--primary);
-}
+.action-btn--hover { opacity: 0.85; }
 
 .pkg-list {
   padding: 0 24rpx;
