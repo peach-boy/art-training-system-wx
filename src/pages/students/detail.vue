@@ -1,6 +1,5 @@
 <template>
   <view class="stu-detail">
-    <BackBar />
     <view v-if="loading" class="empty">加载中...</view>
     <template v-else-if="student">
       <view class="hero">
@@ -145,7 +144,6 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { studentAPI, coursePackageAPI } from '@/api'
-import BackBar from '@/components/BackBar.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import {
   statusLabel,
@@ -234,7 +232,10 @@ function goAttendance() {
 }
 
 function goAddLesson() {
-  uni.navigateTo({ url: `/pages/attendance/form?mode=create&studentId=${studentId}` })
+  uni.navigateTo({
+    url: `/pages/attendance/form?mode=create&studentId=${studentId}`,
+    fail: (e) => uni.showToast({ title: '打开失败：' + (e?.errMsg || ''), icon: 'none' })
+  })
 }
 
 function goPackageRecords(pkg) {

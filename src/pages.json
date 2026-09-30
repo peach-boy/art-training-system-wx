@@ -78,6 +78,29 @@
       }
     },
     {
+      "path": "pages/analysis/index",
+      "style": {
+        "navigationBarTitleText": "分析",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/care/list",
+      "style": {
+        "navigationBarTitleText": "晚托课时",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 120
+      }
+    },
+    {
+      "path": "pages/care/form",
+      "style": {
+        "navigationBarTitleText": "录入晚托课时"
+      }
+    },
+    {
       "path": "pages/profile/index",
       "style": {
         "navigationBarTitleText": "我的",

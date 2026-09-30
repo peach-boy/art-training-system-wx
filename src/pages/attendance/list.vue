@@ -1,5 +1,8 @@
 <template>
   <PageShell title="课时列表" :tab-bar="true" tab-active="attendance">
+    <view v-if="userStore.isAdmin" class="entry-wrap">
+      <KindTabs kind="art" page="list" />
+    </view>
     <view class="filter-card">
       <!-- 时间 -->
       <view class="block block--time">
@@ -152,6 +155,7 @@
 import { ref, computed } from 'vue'
 import { onShow, onLoad, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
+import KindTabs from '@/components/KindTabs.vue'
 import { requireLogin } from '@/stores/user'
 import { useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
@@ -535,6 +539,11 @@ $orange: #f37021;
 $blue: #2f6bff;
 
 /* 筛选卡：一张白卡，两个模块用小色块区分 */
+.entry-wrap {
+  display: flex;
+  margin-bottom: 20rpx;
+}
+
 .filter-card {
   background: #fff;
   border-radius: 28rpx;

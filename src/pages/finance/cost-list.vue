@@ -1,6 +1,5 @@
 <template>
   <view class="cost-page">
-    <BackBar />
     <view class="month-nav">
       <view class="month-btn" @tap="prevMonth">‹</view>
       <text class="month-label">{{ currentYear }} 年 {{ currentMonth }} 月</text>
@@ -47,7 +46,6 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { financialEntryAPI } from '@/api'
-import BackBar from '@/components/BackBar.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import {

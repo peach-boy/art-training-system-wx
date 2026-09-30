@@ -3,8 +3,8 @@
     <scroll-view scroll-y class="form-scroll">
       <view class="form-inner">
         <view class="top">
-          <BackBar />
-          <text class="top-title">{{ mode === 'edit' ? '修正课时' : '录入课时' }}</text>
+          <KindTabs v-if="mode !== 'edit' && userStore.isAdmin" kind="art" page="form" />
+          <text v-else class="top-title">{{ mode === 'edit' ? '修正课时' : '录入课时' }}</text>
         </view>
 
         <!-- 学员 -->
@@ -177,7 +177,8 @@
     <view class="form-footer">
       <view class="footer-info">
         <text class="footer-name">{{ studentLabel || '未选择学员' }}</text>
-        <text class="footer-meta">{{ summaryMeta }}</text>
+        <text v-if="missingHint" class="footer-meta footer-meta--warn">{{ missingHint }}</text>
+        <text v-else class="footer-meta">{{ summaryMeta }}</text>
       </view>
       <view
         class="footer-btn"
@@ -225,7 +226,7 @@ import { imageFullUrl } from '@/utils/media'
 import { uploadLessonImage } from '@/utils/upload'
 import { prepareImageForUpload } from '@/utils/imageCompress'
 import { requireLogin, useUserStore } from '@/stores/user'
-import BackBar from '@/components/BackBar.vue'
+import KindTabs from '@/components/KindTabs.vue'
 
 const userStore = useUserStore()
 
@@ -691,43 +692,37 @@ function buildSubmitData() {
   }
 }
 
+/** 返回第一条未满足的提示；空字符串表示可以提交 */
+function getMissing() {
+  if (uploadingImage.value) return '图片上传中，请稍候'
+  if (userStore.isAdmin && isAllStores()) return '请先在首页选择店铺'
+  if (!studentId.value) return '请先选择学员'
+  if (userStore.isAdmin && !teacherId.value) return '请选择上课员工'
+  if (!userStore.isAdmin && !userStore.userInfo?.teacherId) return '账号未关联上课员工，请联系管理员'
+  if (!classDate.value) return '请选择上课日期'
+  if (lessonType.value === 'regular' && !packageId.value) return '正式课需选择课包'
+  if (lessonType.value === 'temp' && !income.value) return '临时课需填写收入'
+  return ''
+}
+
+/** 底部栏常驻展示还差什么，避免点提交没有任何反应的错觉 */
+const missingHint = computed(() => getMissing())
+
 function validate() {
-  if (uploadingImage.value) {
-    uni.showToast({ title: '图片上传中，请稍候', icon: 'none' })
-    return false
-  }
-  if (userStore.isAdmin && isAllStores()) {
-    uni.showToast({ title: '请先在首页选择店铺', icon: 'none' })
-    return false
-  }
-  if (userStore.isAdmin && !teacherId.value) {
-    uni.showToast({ title: '请选择上课员工', icon: 'none' })
-    return false
-  }
-  if (!userStore.isAdmin && !userStore.userInfo?.teacherId) {
-    uni.showToast({ title: '账号未关联上课员工，请联系管理员', icon: 'none' })
-    return false
-  }
-  if (!studentId.value || !classDate.value) {
-    uni.showToast({ title: '请选择学员和日期', icon: 'none' })
-    return false
-  }
-  if (lessonType.value === 'regular' && !packageId.value) {
-    uni.showToast({ title: '正式课需选择课包', icon: 'none' })
-    return false
-  }
-  if (lessonType.value === 'temp' && !income.value) {
-    uni.showToast({ title: '临时课需填写收入', icon: 'none' })
+  const msg = getMissing()
+  if (msg) {
+    uni.showModal({ title: '还不能提交', content: msg, showCancel: false, confirmText: '知道了' })
     return false
   }
   return true
 }
 
 async function handleSubmit() {
-  if (submitting.value || uploadingImage.value || !validate()) return
-  const payload = buildSubmitData()
+  if (submitting.value) return
+  if (!validate()) return
   submitting.value = true
   try {
+    const payload = buildSubmitData()
     if (mode.value === 'edit') {
       await attendanceAPI.update(recordId.value, payload)
       uni.showToast({ title: '保存成功', icon: 'success' })
@@ -1181,6 +1176,8 @@ $orange: #f37021;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.footer-meta--warn { color: #c13515; font-weight: 600; }
 
 .footer-btn {
   flex-shrink: 0;

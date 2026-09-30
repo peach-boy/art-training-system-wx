@@ -1,6 +1,5 @@
 <template>
   <view v-if="record" class="page-detail">
-    <BackBar />
     <view class="detail-hero">
       <view class="detail-name">{{ record.studentName || '—' }}</view>
       <view class="tag">{{ lessonTypeLabel }}</view>
@@ -61,7 +60,6 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { attendanceAPI } from '@/api'
-import BackBar from '@/components/BackBar.vue'
 import { requireLogin } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
 import { formatClassHours } from '@/utils/classHours'

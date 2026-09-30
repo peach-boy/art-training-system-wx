@@ -32,11 +32,11 @@ export const authAPI = {
 }
 
 export const studentAPI = {
-  search(keyword, scope) {
+  search(keyword, scope, tagName) {
     return request({
       url: '/students/search',
       method: 'GET',
-      params: { keyword: keyword || '', scope: scope || 'mine' }
+      params: { keyword: keyword || '', scope: scope || 'mine', tagName: tagName || undefined }
     })
   },
   getPage(params) {
@@ -78,6 +78,14 @@ export const attendanceAPI = {
       }
     })
   },
+  /** 课时统计：美术 / 晚托 / 全部，含按日明细 */
+  classHoursSummary(startDate, endDate) {
+    return request({
+      url: '/attendance/stats/class-hours',
+      method: 'GET',
+      params: { startDate, endDate }
+    })
+  },
   getById(id) {
     return request({ url: `/attendance/${id}`, method: 'GET' })
   },
@@ -92,6 +100,41 @@ export const attendanceAPI = {
   },
   getLatestRecordByStudent(studentId) {
     return request({ url: `/attendance/student/${studentId}/latest-record`, method: 'GET' })
+  }
+}
+
+/** 晚托课时（与 PC「晚托课时」菜单同一套接口） */
+export const careAPI = {
+  eveningPage(params) {
+    return request({
+      url: '/care-homework/evening-attendance/page',
+      method: 'GET',
+      params: {
+        current: params.current || 1,
+        size: params.size || 10,
+        studentId: params.studentId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+        sortBy: params.sortBy || 'classDate'
+      }
+    })
+  },
+  dailyStats(sessionDate) {
+    return request({
+      url: '/care-homework/daily-stats',
+      method: 'GET',
+      params: { sessionDate }
+    })
+  },
+  dailySessions(sessionDate) {
+    return request({
+      url: '/care-homework/daily-sessions',
+      method: 'GET',
+      params: { sessionDate }
+    })
+  },
+  deduct(data) {
+    return request({ url: '/care-homework/daily-sessions/deduct', method: 'POST', data })
   }
 }
 

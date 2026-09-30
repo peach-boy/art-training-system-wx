@@ -1,6 +1,5 @@
 <template>
   <view class="pkg-records">
-    <BackBar />
     <view v-if="loading" class="empty">加载中...</view>
     <view v-else-if="notFound" class="empty">课包不存在或无权查看</view>
     <template v-else-if="pkg">
@@ -97,7 +96,6 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { coursePackageAPI, fetchPackageAttendanceRecords } from '@/api'
-import BackBar from '@/components/BackBar.vue'
 import { requireLogin } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
 import {

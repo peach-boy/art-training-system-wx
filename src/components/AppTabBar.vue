@@ -37,6 +37,7 @@ const userStore = useUserStore()
 const teacherTabs = [
   { key: 'home', label: '首页', icon: 'home', path: '/pages/home/index' },
   { key: 'attendance', label: '课时', icon: 'attendance', path: '/pages/attendance/list' },
+  { key: 'analysis', label: '分析', icon: 'analysis', path: '/pages/analysis/index' },
   { key: 'profile', label: '我的', icon: 'profile', path: '/pages/profile/index' }
 ]
 
@@ -44,6 +45,7 @@ const adminTabs = [
   { key: 'home', label: '首页', icon: 'home', path: '/pages/home/index' },
   { key: 'students', label: '学员', icon: 'students', path: '/pages/students/list' },
   { key: 'attendance', label: '课时', icon: 'attendance', path: '/pages/attendance/list' },
+  { key: 'analysis', label: '分析', icon: 'analysis', path: '/pages/analysis/index' },
   { key: 'profile', label: '我的', icon: 'profile', path: '/pages/profile/index' }
 ]
 

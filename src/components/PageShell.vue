@@ -24,7 +24,7 @@ const props = defineProps({
   title: { type: String, default: '' },
   tabBar: { type: Boolean, default: false },
   tabActive: { type: String, default: 'home' },
-  showBack: { type: Boolean, default: true }
+  showBack: { type: Boolean, default: false }
 })
 
 const statusBarHeight = ref(20)

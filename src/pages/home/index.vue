@@ -10,50 +10,37 @@
 
     <StoreSwitcher v-if="userStore.isAdmin" />
 
-    <view class="cta" hover-class="cta--hover" @tap="goRecord">
-      <view class="cta__text">
-        <text class="cta__title">录入课时</text>
-        <text class="cta__sub">选学员、点节数，可拍照留档</text>
+    <view class="cta-row">
+      <view class="cta" hover-class="cta--hover" @tap="goRecord">
+        <view class="cta__text">
+          <text class="cta__title">美术课时</text>
+          <text class="cta__sub">录入 · 可拍照留档</text>
+        </view>
+        <view class="cta__plus">+</view>
       </view>
-      <view class="cta__plus">+</view>
-    </view>
-
-    <view v-if="userStore.isTeacher" class="stats">
-      <view class="stat">
-        <text class="stat__value">{{ monthClassHours }}</text>
-        <text class="stat__label">本月课时</text>
+      <view v-if="userStore.isAdmin" class="cta cta--care" hover-class="cta--hover" @tap="goCareRecord">
+        <view class="cta__text">
+          <text class="cta__title">晚托课时</text>
+          <text class="cta__sub">录入 · 今日扣课</text>
+        </view>
+        <view class="cta__plus">+</view>
       </view>
-      <view class="stat">
-        <text class="stat__value">{{ recordTotal }}</text>
-        <text class="stat__label">记录总数</text>
-      </view>
-    </view>
-
-    <view v-else-if="showAdminStats" class="stats">
-      <view class="stat">
-        <text class="stat__value">{{ adminStats.totalCount }}</text>
-        <text class="stat__label">本周课时</text>
-      </view>
-      <view class="stat">
-        <text class="stat__value">{{ adminStats.distinctStudents }}</text>
-        <text class="stat__label">上课学员</text>
-      </view>
-      <view class="stat stat--warn">
-        <text class="stat__value">{{ adminStats.feeOverdue }}</text>
-        <text class="stat__label">待续费</text>
-      </view>
-    </view>
-
-    <view v-if="userStore.isPrivilegedAdmin && !statsLoading" class="admin-hint">
-      超级管理员：门店统计与财务报表请在 PC 后台查看
     </view>
 
     <view class="menu">
       <view class="menu-item" hover-class="menu-item--hover" @tap="goAttendance">
-        <view class="menu-icon menu-icon--blue">课</view>
+        <view class="menu-icon menu-icon--blue">美</view>
         <view class="menu-main">
-          <text class="menu-title">课时记录</text>
+          <text class="menu-title">美术课时记录</text>
           <text class="menu-sub">按日、周、月查看已录入课时</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+      <view v-if="userStore.isAdmin" class="menu-item" hover-class="menu-item--hover" @tap="goCareList">
+        <view class="menu-icon menu-icon--care">晚</view>
+        <view class="menu-main">
+          <text class="menu-title">晚托课时记录</text>
+          <text class="menu-sub">按月查看晚托扣课记录</text>
         </view>
         <text class="menu-arrow">›</text>
       </view>
@@ -83,42 +70,9 @@ import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
-import { useStoreRefresh } from '@/composables/useStoreRefresh'
-import { attendanceAPI, dashboardAPI } from '@/api'
 import { getRoleDisplay } from '@/utils/role'
 
-function weekRange() {
-  const now = new Date()
-  const day = now.getDay() || 7
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - day + 1)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const fmt = (d) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  return { start: fmt(monday), end: fmt(sunday) }
-}
-
 const userStore = useUserStore()
-
-const statsLoading = ref(false)
-const monthClassHours = ref('-')
-const recordTotal = ref('-')
-const adminStats = ref({
-  totalCount: '-',
-  distinctStudents: '-',
-  feeOverdue: '-'
-})
-
-function resetStatsPlaceholder() {
-  monthClassHours.value = '-'
-  recordTotal.value = '-'
-  adminStats.value = {
-    totalCount: '-',
-    distinctStudents: '-',
-    feeOverdue: '-'
-  }
-}
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1))
 
@@ -141,66 +95,29 @@ const quickSectionTitle = computed(() =>
   roleDisplay.value.isTeacher ? '员工快捷操作' : '管理快捷操作'
 )
 
-/** 普通/财务管理员展示门店统计；超管移动端不拉统计 */
-const showAdminStats = computed(
-  () => userStore.isAdmin && !userStore.isPrivilegedAdmin
-)
-
 onShow(() => {
   if (!requireLogin()) return
   if (userStore.role === 'parent') {
     uni.reLaunch({ url: '/pages/parent/home' })
-    return
   }
-  loadStats()
 })
 
-useStoreRefresh(() => loadStats())
-
-async function loadStats() {
-  statsLoading.value = true
-  resetStatsPlaceholder()
-  try {
-    if (userStore.isTeacher) {
-      try {
-        const [summary, pageData] = await Promise.all([
-          attendanceAPI.getMonthlySummary(),
-          attendanceAPI.getPage({ current: 1, size: 1 })
-        ])
-        monthClassHours.value =
-          summary?.classHoursTotal != null ? String(summary.classHoursTotal) : '0'
-        recordTotal.value = pageData?.total != null ? String(pageData.total) : '0'
-      } catch (e) {
-        monthClassHours.value = '-'
-        recordTotal.value = '-'
-      }
-      return
-    }
-
-    if (showAdminStats.value) {
-      try {
-        const { start, end } = weekRange()
-        const [stats, counts] = await Promise.all([
-          dashboardAPI.getStats(start, end),
-          dashboardAPI.getStudentCounts()
-        ])
-        const rows = stats?.rows || []
-        adminStats.value = {
-          totalCount: rows.reduce((s, r) => s + Number(r.count || 0), 0),
-          distinctStudents: stats?.distinctStudents ?? '-',
-          feeOverdue: counts?.feeOverdue ?? '-'
-        }
-      } catch (e) {
-        adminStats.value = { totalCount: '-', distinctStudents: '-', feeOverdue: '-' }
-      }
-    }
-  } finally {
-    statsLoading.value = false
-  }
+function goRecord() {
+  uni.navigateTo({
+    url: '/pages/attendance/form?mode=create',
+    fail: (e) => uni.showToast({ title: '打开失败：' + (e?.errMsg || ''), icon: 'none' })
+  })
 }
 
-function goRecord() {
-  uni.navigateTo({ url: '/pages/attendance/form?mode=create' })
+function goCareRecord() {
+  uni.navigateTo({
+    url: '/pages/care/form',
+    fail: (e) => uni.showToast({ title: '打开失败：' + (e?.errMsg || ''), icon: 'none' })
+  })
+}
+
+function goCareList() {
+  uni.reLaunch({ url: '/pages/care/list' })
 }
 
 function goAttendance() {
@@ -274,15 +191,28 @@ $orange: #f37021;
 .hello__avatar--admin { background: linear-gradient(135deg, #2f54eb, #6d8cff); }
 
 /* 主操作 */
+.cta-row {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
 .cta {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
-  padding: 36rpx 32rpx;
+  gap: 8rpx;
+  padding: 30rpx 24rpx;
   border-radius: 28rpx;
   background: linear-gradient(135deg, #f37021 0%, #ff9a4d 100%);
   box-shadow: 0 16rpx 36rpx rgba(243, 112, 33, 0.28);
+}
+
+.cta--care {
+  background: linear-gradient(135deg, #6d5dfc 0%, #8f82ff 100%);
+  box-shadow: 0 16rpx 36rpx rgba(109, 93, 252, 0.28);
 }
 
 .cta--hover { opacity: 0.92; }
@@ -294,7 +224,7 @@ $orange: #f37021;
 }
 
 .cta__title {
-  font-size: 40rpx;
+  font-size: 34rpx;
   font-weight: 700;
   color: #fff;
 }
@@ -305,15 +235,18 @@ $orange: #f37021;
 }
 
 .cta__plus {
-  width: 88rpx;
-  height: 88rpx;
-  line-height: 80rpx;
+  flex-shrink: 0;
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 58rpx;
   text-align: center;
-  font-size: 60rpx;
+  font-size: 44rpx;
   color: #f37021;
   background: #fff;
   border-radius: 50%;
 }
+
+.cta--care .cta__plus { color: #6d5dfc; }
 
 /* 数据 */
 .stats {
@@ -391,6 +324,7 @@ $orange: #f37021;
 
 .menu-icon--blue { color: #3d7dff; background: rgba(61, 125, 255, 0.12); }
 .menu-icon--orange { color: $orange; background: rgba(243, 112, 33, 0.12); }
+.menu-icon--care { color: #6d5dfc; background: rgba(109, 93, 252, 0.12); }
 .menu-icon--teal { color: #0e8a8a; background: rgba(26, 166, 166, 0.14); }
 
 .menu-main {
