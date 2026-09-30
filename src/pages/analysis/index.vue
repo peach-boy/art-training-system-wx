@@ -1,15 +1,13 @@
 <template>
   <PageShell title="数据分析" :tab-bar="true" tab-active="analysis" :show-back="false">
-    <view class="head">
-      <text class="head-title">数据看板</text>
-      <text class="head-date">{{ todayText }}</text>
-    </view>
-
     <StoreSwitcher v-if="userStore.isAdmin" />
 
     <!-- 课时统计 -->
     <view class="stat-card">
-      <view class="stat-title">课时统计</view>
+      <view class="stat-head">
+        <text class="stat-title">课时统计</text>
+        <text class="stat-date">{{ todayText }}</text>
+      </view>
 
       <view v-if="userStore.isAdmin" class="kind-seg">
         <view
@@ -60,6 +58,10 @@
           <text class="sum-val">{{ bucket.classes }}</text>
           <text class="sum-label">课时数</text>
         </view>
+        <view class="sum-cell sum-cell--money">
+          <text class="sum-val">{{ bucket.income }}</text>
+          <text class="sum-label">金额</text>
+        </view>
         <view class="sum-cell">
           <text class="sum-val">{{ bucket.records }}</text>
           <text class="sum-label">记录数</text>
@@ -71,8 +73,8 @@
       </view>
 
       <view v-if="kind === 'all' && userStore.isAdmin" class="split">
-        <text class="split-art">美术 {{ summary.art.classes }}</text>
-        <text class="split-care">晚托 {{ summary.care.classes }}</text>
+        <text class="split-art">美术 {{ artClassesText }} · {{ artIncomeText }}</text>
+        <text class="split-care">晚托 {{ careClassesText }} · {{ careIncomeText }}</text>
       </view>
 
       <view v-if="periodMode !== 'day'" class="chart">
@@ -123,32 +125,6 @@
       </view>
     </view>
 
-    <!-- 晚托课时：仅管理员 -->
-    <view v-if="userStore.isAdmin" class="sec sec--care" hover-class="sec--hover" @tap="goCareList">
-      <view class="tag tag--care">
-        <text>晚托课时 · 今日</text>
-        <text class="go">查看记录 ›</text>
-      </view>
-      <view class="grid">
-        <view class="cell">
-          <text class="val">{{ careToday.attended }}<text class="sub">/{{ careToday.registered }}</text></text>
-          <text class="label">到班 / 在册</text>
-        </view>
-        <view class="cell">
-          <text class="val">{{ careToday.classes }}</text>
-          <text class="label">扣课时</text>
-        </view>
-        <view class="cell">
-          <text class="val">{{ careToday.homework }}</text>
-          <text class="label">作业登记</text>
-        </view>
-        <view class="cell cell--warn">
-          <text class="val">{{ careToday.pending }}</text>
-          <text class="label">待反馈</text>
-        </view>
-      </view>
-    </view>
-
     <view v-if="userStore.isPrivilegedAdmin" class="admin-hint">
       超级管理员：门店美术统计与财务报表请在 PC 后台查看
     </view>
@@ -164,8 +140,9 @@ import PageShell from '@/components/PageShell.vue'
 import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
-import { attendanceAPI, dashboardAPI, careAPI } from '@/api'
+import { attendanceAPI, dashboardAPI } from '@/api'
 import { formatClassHours } from '@/utils/classHours'
+import { formatMoney } from '@/utils/format'
 import {
   PERIOD_MODES,
   todayStr,
@@ -193,7 +170,7 @@ const periodMode = ref('week')
 const anchorDate = ref(todayStr())
 const monthValue = ref(currentMonthStr())
 const statLoading = ref(false)
-const emptyBucket = () => ({ classes: 0, records: 0, students: 0 })
+const emptyBucket = () => ({ classes: 0, income: 0, records: 0, students: 0 })
 const summary = ref({ all: emptyBucket(), art: emptyBucket(), care: emptyBucket(), rows: [] })
 
 function weekdayOf(dateStr) {
@@ -221,10 +198,16 @@ const bucket = computed(() => {
   const b = summary.value[kind.value] || emptyBucket()
   return {
     classes: formatClassHours(b.classes),
+    income: formatMoney(b.income),
     records: b.records ?? 0,
     students: b.students ?? 0
   }
 })
+
+const artClassesText = computed(() => formatClassHours(summary.value.art?.classes))
+const careClassesText = computed(() => formatClassHours(summary.value.care?.classes))
+const artIncomeText = computed(() => formatMoney(summary.value.art?.income))
+const careIncomeText = computed(() => formatMoney(summary.value.care?.income))
 
 const bars = computed(() => {
   const showArt = kind.value !== 'care'
@@ -304,7 +287,6 @@ function shiftPeriod(dir) {
 const monthClassHours = ref('-')
 const recordTotal = ref('-')
 const adminStats = ref({ totalCount: '-', distinctStudents: '-', feeOverdue: '-' })
-const careToday = ref({ attended: '-', registered: '-', classes: '-', homework: '-', pending: '-' })
 
 const todayText = computed(() => {
   const d = new Date()
@@ -327,29 +309,6 @@ function weekRange() {
   const sunday = new Date(monday)
   sunday.setDate(monday.getDate() + 6)
   return { start: fmt(monday), end: fmt(sunday) }
-}
-
-function fmtNum(v) {
-  if (v == null || v === '') return '-'
-  const n = Number(v)
-  if (Number.isNaN(n)) return '-'
-  return String(Math.round(n * 100) / 100)
-}
-
-async function loadCareToday() {
-  if (!userStore.isAdmin) return
-  try {
-    const s = await careAPI.dailyStats(fmt(new Date()))
-    careToday.value = {
-      attended: fmtNum(s?.attendedStudentCount),
-      registered: fmtNum(s?.registeredStudentCount),
-      classes: fmtNum(s?.classesTotal),
-      homework: fmtNum(s?.homeworkCount),
-      pending: fmtNum(s?.pendingFeedbackCount)
-    }
-  } catch (e) {
-    careToday.value = { attended: '-', registered: '-', classes: '-', homework: '-', pending: '-' }
-  }
 }
 
 async function loadTeacherStats() {
@@ -388,7 +347,6 @@ async function loadAll() {
   const tasks = [loadSummary()]
   if (userStore.isTeacher) tasks.push(loadTeacherStats())
   else if (showAdminStats.value) tasks.push(loadAdminStats())
-  tasks.push(loadCareToday())
   await Promise.all(tasks)
 }
 
@@ -411,30 +369,20 @@ onPullDownRefresh(async () => {
 function goAttendance() {
   uni.reLaunch({ url: '/pages/attendance/list' })
 }
-
-function goCareList() {
-  uni.reLaunch({ url: '/pages/care/list' })
-}
 </script>
 
 <style lang="scss" scoped>
 $ink: #2a241f;
 $muted: #8a8178;
 
-.head {
+.stat-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 20rpx;
 }
 
-.head-title {
-  font-size: 36rpx;
-  font-weight: 800;
-  color: $ink;
-}
-
-.head-date {
+.stat-date {
   font-size: 24rpx;
   color: $muted;
 }
@@ -514,7 +462,7 @@ $muted: #8a8178;
 }
 
 .stat-title {
-  margin-bottom: 20rpx;
+  margin-bottom: 0;
   font-size: 30rpx;
   font-weight: 800;
   color: $ink;
@@ -607,7 +555,8 @@ $muted: #8a8178;
 
 .sum-grid {
   display: flex;
-  padding: 24rpx 0;
+  flex-wrap: wrap;
+  padding: 20rpx 0 8rpx;
   background: #faf7f2;
   border-radius: 20rpx;
 }
@@ -616,12 +565,25 @@ $muted: #8a8178;
 .sum-grid--care { background: #f1efff; }
 
 .sum-cell {
-  flex: 1;
+  flex: 0 0 50%;
+  box-sizing: border-box;
+  padding: 16rpx 0;
   text-align: center;
-  border-right: 1rpx solid rgba(42, 36, 31, 0.08);
+  border-bottom: 1rpx solid rgba(42, 36, 31, 0.06);
 }
 
-.sum-cell:last-child { border-right: none; }
+.sum-cell:nth-child(odd) {
+  border-right: 1rpx solid rgba(42, 36, 31, 0.06);
+}
+
+.sum-cell:nth-last-child(-n + 2) {
+  border-bottom: none;
+}
+
+.sum-cell--money .sum-val {
+  font-size: 40rpx;
+  color: #c13515;
+}
 
 .sum-val {
   display: block;
