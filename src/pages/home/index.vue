@@ -1,17 +1,29 @@
 <template>
-  <PageShell :title="pageTitle" :tab-bar="true" tab-active="home" :show-back="false">
-    <view class="hello">
-      <view class="hello__text">
-        <text class="hello__greet">{{ greeting }}，{{ userStore.displayName }}</text>
-        <text class="hello__role" :class="'hello__role--' + roleDisplay.badgeTheme">{{ roleDisplay.subLabel }}</text>
+  <PageShell title="" :tab-bar="true" tab-active="home" :show-back="false">
+    <view class="hero" :class="'hero--' + roleDisplay.badgeTheme">
+      <view class="hero__bubble hero__bubble--a" />
+      <view class="hero__bubble hero__bubble--b" />
+      <view class="hero__brand">
+        <image class="hero__logo" src="/static/logo.svg" mode="aspectFit" />
+        <text class="hero__brand-name">乐橙助教</text>
+        <text class="hero__date">{{ todayText }}</text>
       </view>
-      <view class="hello__avatar" :class="'hello__avatar--' + roleDisplay.badgeTheme">{{ avatarText }}</view>
+      <view class="hero__main">
+        <view class="hero__text">
+          <text class="hero__greet">{{ greeting }}</text>
+          <text class="hero__name">{{ userStore.displayName }}</text>
+          <text class="hero__role">{{ roleDisplay.subLabel }}</text>
+        </view>
+        <view class="hero__avatar">{{ avatarText }}</view>
+      </view>
     </view>
 
     <StoreSwitcher v-if="userStore.isAdmin" />
 
+    <view class="section-title">快捷录入</view>
     <view class="cta-row">
       <view class="cta" hover-class="cta--hover" @tap="goRecord">
+        <view class="cta__icon"><image class="cta__img" src="/static/home/art.svg" mode="aspectFit" /></view>
         <view class="cta__text">
           <text class="cta__title">美术课时</text>
           <text class="cta__sub">录入 · 可拍照留档</text>
@@ -19,6 +31,7 @@
         <view class="cta__plus">+</view>
       </view>
       <view v-if="userStore.isAdmin" class="cta cta--care" hover-class="cta--hover" @tap="goCareRecord">
+        <view class="cta__icon"><image class="cta__img" src="/static/home/care.svg" mode="aspectFit" /></view>
         <view class="cta__text">
           <text class="cta__title">晚托课时</text>
           <text class="cta__sub">录入 · 今日扣课</text>
@@ -27,38 +40,27 @@
       </view>
     </view>
 
-    <view class="menu">
-      <view class="menu-item" hover-class="menu-item--hover" @tap="goAttendance">
-        <view class="menu-icon menu-icon--blue">美</view>
-        <view class="menu-main">
-          <text class="menu-title">美术课时记录</text>
-          <text class="menu-sub">按日、周、月查看已录入课时</text>
-        </view>
-        <text class="menu-arrow">›</text>
+    <view class="section-title">常用功能</view>
+    <view class="grid">
+      <view class="tile" hover-class="tile--hover" @tap="goAttendance">
+        <view class="tile__icon tile__icon--orange"><image class="tile__img" src="/static/home/record.svg" mode="aspectFit" /></view>
+        <text class="tile__title">美术课时记录</text>
+        <text class="tile__sub">按日 / 周 / 月查看</text>
       </view>
-      <view v-if="userStore.isAdmin" class="menu-item" hover-class="menu-item--hover" @tap="goCareList">
-        <view class="menu-icon menu-icon--care">晚</view>
-        <view class="menu-main">
-          <text class="menu-title">晚托课时记录</text>
-          <text class="menu-sub">按月查看晚托扣课记录</text>
-        </view>
-        <text class="menu-arrow">›</text>
+      <view v-if="userStore.isAdmin" class="tile" hover-class="tile--hover" @tap="goCareList">
+        <view class="tile__icon tile__icon--care"><image class="tile__img" src="/static/home/care.svg" mode="aspectFit" /></view>
+        <text class="tile__title">晚托课时记录</text>
+        <text class="tile__sub">按日 / 周 / 月查看</text>
       </view>
-      <view v-if="userStore.isAdmin" class="menu-item" hover-class="menu-item--hover" @tap="goStudents">
-        <view class="menu-icon menu-icon--orange">生</view>
-        <view class="menu-main">
-          <text class="menu-title">学员列表</text>
-          <text class="menu-sub">课包、剩余课时与上课记录</text>
-        </view>
-        <text class="menu-arrow">›</text>
+      <view v-if="userStore.isAdmin" class="tile" hover-class="tile--hover" @tap="goStudents">
+        <view class="tile__icon tile__icon--blue"><image class="tile__img" src="/static/home/students.svg" mode="aspectFit" /></view>
+        <text class="tile__title">学员列表</text>
+        <text class="tile__sub">课包与剩余课时</text>
       </view>
-      <view v-if="userStore.isFinanceStaff" class="menu-item" hover-class="menu-item--hover" @tap="goCost">
-        <view class="menu-icon menu-icon--teal">¥</view>
-        <view class="menu-main">
-          <text class="menu-title">录入成本</text>
-          <text class="menu-sub">门店成本与支出记录</text>
-        </view>
-        <text class="menu-arrow">›</text>
+      <view v-if="userStore.isFinanceStaff" class="tile" hover-class="tile--hover" @tap="goCost">
+        <view class="tile__icon tile__icon--teal"><image class="tile__img" src="/static/home/cost.svg" mode="aspectFit" /></view>
+        <text class="tile__title">录入成本</text>
+        <text class="tile__sub">门店成本与支出</text>
       </view>
     </view>
   </PageShell>
@@ -87,13 +89,11 @@ const greeting = computed(() => {
 
 const roleDisplay = computed(() => getRoleDisplay(userStore.role))
 
-const pageTitle = computed(() =>
-  roleDisplay.value.isTeacher ? '员工首页' : '管理首页'
-)
-
-const quickSectionTitle = computed(() =>
-  roleDisplay.value.isTeacher ? '员工快捷操作' : '管理快捷操作'
-)
+const todayText = computed(() => {
+  const d = new Date()
+  const w = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${w}`
+})
 
 onShow(() => {
   if (!requireLogin()) return
@@ -134,67 +134,129 @@ function goCost() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
-$orange: #f37021;
 
-.hello {
+/* 顶部问候卡：爱马仕橙 / 马鞍棕 */
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+  padding: 28rpx 32rpx 36rpx;
+  border-radius: 36rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #f7792b 0%, #ea5d14 100%);
+  box-shadow: 0 20rpx 44rpx rgba(234, 93, 20, 0.32);
+}
+
+.hero--admin {
+  background: linear-gradient(135deg, #4a2e1f 0%, #2b1a11 100%);
+  box-shadow: 0 20rpx 44rpx rgba(43, 26, 17, 0.35);
+}
+
+.hero__bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: transparent;
+  border: 2rpx solid rgba(255, 226, 194, 0.35);
+}
+
+.hero__bubble--a { width: 320rpx; height: 320rpx; top: -120rpx; right: -90rpx; }
+.hero__bubble--b { width: 200rpx; height: 200rpx; top: -60rpx; right: -30rpx; }
+
+.hero--admin .hero__bubble { border-color: rgba(243, 112, 33, 0.45); }
+
+.hero__brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.hero__logo {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+}
+
+.hero__brand-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.hero__date {
+  margin-left: auto;
+  font-size: 23rpx;
+  opacity: 0.88;
+}
+
+.hero__main {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
-  margin-bottom: 24rpx;
+  margin-top: 34rpx;
 }
 
-.hello__text {
+.hero__text {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10rpx;
 }
 
-.hello__greet {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: $ink;
+.hero__greet {
+  font-size: 26rpx;
+  opacity: 0.9;
+}
+
+.hero__name {
   max-width: 100%;
+  margin: 6rpx 0 14rpx;
+  font-size: 50rpx;
+  font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.hello__role {
-  padding: 4rpx 18rpx;
+.hero__role {
+  padding: 4rpx 20rpx;
   font-size: 22rpx;
   font-weight: 600;
+  background: rgba(255, 244, 232, 0.2);
+  border: 1rpx solid rgba(255, 226, 194, 0.55);
   border-radius: 999rpx;
 }
 
-.hello__role--teacher { color: $orange; background: rgba(243, 112, 33, 0.12); }
-.hello__role--admin { color: #2f54eb; background: rgba(47, 84, 235, 0.1); }
-
-.hello__avatar {
+.hero__avatar {
   flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  line-height: 88rpx;
+  width: 104rpx;
+  height: 104rpx;
+  line-height: 100rpx;
   text-align: center;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #fff;
-  border-radius: 30rpx;
+  font-size: 44rpx;
+  font-weight: 800;
+  background: rgba(255, 244, 232, 0.2);
+  border: 2rpx solid rgba(255, 226, 194, 0.7);
+  border-radius: 36rpx;
 }
 
-.hello__avatar--teacher { background: linear-gradient(135deg, #f37021, #ff9a4d); }
-.hello__avatar--admin { background: linear-gradient(135deg, #2f54eb, #6d8cff); }
+.section-title {
+  margin: 8rpx 4rpx 16rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: $ink;
+}
 
-/* 主操作 */
+/* 快捷录入 */
 .cta-row {
   display: flex;
   gap: 20rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
 }
 
 .cta {
@@ -202,153 +264,112 @@ $orange: #f37021;
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8rpx;
-  padding: 30rpx 24rpx;
-  border-radius: 28rpx;
-  background: linear-gradient(135deg, #f37021 0%, #ff9a4d 100%);
-  box-shadow: 0 16rpx 36rpx rgba(243, 112, 33, 0.28);
+  gap: 16rpx;
+  padding: 28rpx 22rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #f37021 0%, #f98a3c 100%);
+  box-shadow: 0 14rpx 32rpx rgba(243, 112, 33, 0.26);
 }
 
 .cta--care {
-  background: linear-gradient(135deg, #6d5dfc 0%, #8f82ff 100%);
-  box-shadow: 0 16rpx 36rpx rgba(109, 93, 252, 0.28);
+  background: linear-gradient(135deg, #5b3a29 0%, #8a6249 100%);
+  box-shadow: 0 14rpx 32rpx rgba(91, 58, 41, 0.26);
 }
 
-.cta--hover { opacity: 0.92; }
+.cta--hover { opacity: 0.92; transform: scale(0.985); }
 
-.cta__text {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.cta__title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #fff;
-}
-
-.cta__sub {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.cta__plus {
+.cta__icon {
   flex-shrink: 0;
-  width: 64rpx;
-  height: 64rpx;
-  line-height: 58rpx;
-  text-align: center;
-  font-size: 44rpx;
-  color: #f37021;
-  background: #fff;
-  border-radius: 50%;
-}
-
-.cta--care .cta__plus { color: #6d5dfc; }
-
-/* 数据 */
-.stats {
-  display: flex;
-  margin-bottom: 24rpx;
-  padding: 28rpx 0;
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
-}
-
-.stat {
-  flex: 1;
-  text-align: center;
-  border-right: 1rpx solid #f0eae3;
-}
-
-.stat:last-child { border-right: none; }
-
-.stat__value {
-  display: block;
-  font-size: 44rpx;
-  font-weight: 700;
-  color: $ink;
-}
-
-.stat--warn .stat__value { color: #c13515; }
-
-.stat__label {
-  display: block;
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  color: $muted;
-}
-
-.admin-hint {
-  margin-bottom: 24rpx;
-  padding: 18rpx 24rpx;
-  font-size: 23rpx;
-  line-height: 1.5;
-  color: #ad6800;
-  background: #fffbe6;
-  border-radius: 16rpx;
-}
-
-/* 菜单 */
-.menu {
-  background: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
-  overflow: hidden;
-}
-
-.menu-item {
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
-  gap: 22rpx;
-  padding: 26rpx 28rpx;
-  border-bottom: 1rpx solid #f0eae3;
-}
-
-.menu-item:last-child { border-bottom: none; }
-.menu-item--hover { background: #faf6f1; }
-
-.menu-icon {
-  flex-shrink: 0;
-  width: 76rpx;
-  height: 76rpx;
-  line-height: 76rpx;
-  text-align: center;
-  font-size: 30rpx;
-  font-weight: 700;
+  justify-content: center;
+  background: #fff;
   border-radius: 24rpx;
 }
 
-.menu-icon--blue { color: #3d7dff; background: rgba(61, 125, 255, 0.12); }
-.menu-icon--orange { color: $orange; background: rgba(243, 112, 33, 0.12); }
-.menu-icon--care { color: #6d5dfc; background: rgba(109, 93, 252, 0.12); }
-.menu-icon--teal { color: #0e8a8a; background: rgba(26, 166, 166, 0.14); }
+.cta__img { width: 40rpx; height: 40rpx; }
 
-.menu-main {
+.cta__text {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 6rpx;
 }
 
-.menu-title {
+.cta__title {
   font-size: 30rpx;
-  font-weight: 600;
+  font-weight: 800;
+  color: #fff;
+}
+
+.cta__sub {
+  font-size: 21rpx;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.cta__plus {
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 44rpx;
+  text-align: center;
+  font-size: 36rpx;
+  color: #f37021;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+}
+
+.cta--care .cta__plus { color: #5b3a29; }
+
+/* 常用功能 */
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.tile {
+  box-sizing: border-box;
+  width: calc(50% - 10rpx);
+  padding: 28rpx 26rpx 26rpx;
+  background: #fff;
+  border-radius: 30rpx;
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
+}
+
+.tile--hover { background: #faf6f1; transform: scale(0.985); }
+
+.tile__icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+  border-radius: 26rpx;
+}
+
+.tile__img { width: 44rpx; height: 44rpx; }
+
+.tile__icon--orange { background: rgba(243, 112, 33, 0.12); }
+.tile__icon--care { background: rgba(91, 58, 41, 0.12); }
+.tile__icon--blue { background: rgba(58, 36, 24, 0.08); }
+.tile__icon--teal { background: rgba(26, 166, 166, 0.14); }
+
+.tile__title {
+  display: block;
+  font-size: 29rpx;
+  font-weight: 700;
   color: $ink;
 }
 
-.menu-sub {
+.tile__sub {
+  display: block;
+  margin-top: 6rpx;
   font-size: 22rpx;
   color: $muted;
-}
-
-.menu-arrow {
-  font-size: 40rpx;
-  line-height: 1;
-  color: #cfc6bc;
 }
 </style>

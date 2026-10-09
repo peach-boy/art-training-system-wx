@@ -78,7 +78,7 @@ async function confirm() {
 .page {
   min-height: 100vh;
   padding: 48rpx 32rpx;
-  background: #f6f2ec;
+  background: #f7f0e6;
   box-sizing: border-box;
 }
 
@@ -101,7 +101,7 @@ async function confirm() {
   margin-top: 12rpx;
   font-size: 40rpx;
   font-weight: 800;
-  color: #2a241f;
+  color: #2b1b12;
 }
 
 .desc {

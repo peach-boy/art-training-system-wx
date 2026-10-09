@@ -25,7 +25,7 @@ function goBack() {
   gap: 4rpx;
   min-height: 64rpx;
   padding: 0 8rpx 0 0;
-  color: #2a241f;
+  color: #2b1b12;
 }
 
 .back-bar__chev {

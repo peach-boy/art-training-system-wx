@@ -364,14 +364,14 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
-$care: #6d5dfc;
+$care: #5b3a29;
 
 .page {
   min-height: 100vh;
   padding: 0 24rpx calc(200rpx + env(safe-area-inset-bottom));
-  background: #f6f2ec;
+  background: #f7f0e6;
   box-sizing: border-box;
 }
 
@@ -453,7 +453,7 @@ $care: #6d5dfc;
   font-size: 30rpx;
   font-weight: 700;
   color: $care;
-  background: rgba(109, 93, 252, 0.12);
+  background: rgba(91, 58, 41, 0.12);
   border-radius: 24rpx;
 }
 
@@ -481,7 +481,7 @@ $care: #6d5dfc;
   padding: 0 12rpx;
   font-size: 20rpx;
   color: $care;
-  background: rgba(109, 93, 252, 0.1);
+  background: rgba(91, 58, 41, 0.1);
   border-radius: 999rpx;
 }
 
@@ -508,7 +508,7 @@ $care: #6d5dfc;
   font-size: 27rpx;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #6d5dfc, #8f82ff);
+  background: linear-gradient(135deg, #5b3a29, #8a6249);
   border-radius: 999rpx;
 }
 
@@ -564,7 +564,7 @@ $care: #6d5dfc;
   align-items: center;
   height: 80rpx;
   padding: 0 6rpx 0 24rpx;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border-radius: 999rpx;
 }
 
@@ -677,7 +677,7 @@ $care: #6d5dfc;
   text-align: center;
   font-size: 27rpx;
   color: $muted;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border: 2rpx solid transparent;
   border-radius: 18rpx;
   box-sizing: border-box;
@@ -686,7 +686,7 @@ $care: #6d5dfc;
 .chip.active {
   color: $care;
   font-weight: 700;
-  background: rgba(109, 93, 252, 0.1);
+  background: rgba(91, 58, 41, 0.1);
   border-color: $care;
 }
 
@@ -743,7 +743,7 @@ $care: #6d5dfc;
   font-size: 30rpx;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #6d5dfc, #8f82ff);
+  background: linear-gradient(135deg, #5b3a29, #8a6249);
   border-radius: 999rpx;
 }
 

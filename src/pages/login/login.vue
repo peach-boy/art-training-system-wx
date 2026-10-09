@@ -7,12 +7,9 @@
       <view class="hero-bubble hero-bubble--c" />
       <view class="login-status" :style="{ height: statusBarHeight + 'px' }" />
       <view class="login-brand">
-        <view class="login-logo">
-          <view class="logo-fruit" />
-          <view class="logo-leaf" />
-        </view>
-        <text class="login-title">橙子课时助手</text>
-        <text class="login-sub">录课时、看课表，随手就能办</text>
+        <image class="login-logo" src="/static/logo.svg" mode="aspectFit" />
+        <text class="login-title">乐橙助教</text>
+        <text class="login-sub">录课时 · 看进度 · 家校同步</text>
       </view>
     </view>
 
@@ -20,29 +17,42 @@
     <view class="login-body">
       <!-- #ifdef MP-WEIXIN -->
       <view class="login-form login-form--wechat">
-        <text class="form-title">选择身份登录</text>
-        <text class="form-desc">微信手机号只匹配你选中的那一类账号</text>
+        <text class="form-title">欢迎使用</text>
+        <text class="form-desc">请选择你的身份，用微信手机号一键登录</text>
 
         <view class="role-list">
           <view
             v-for="item in loginRoles"
             :key="item.value"
             class="role-card"
-            :class="{ active: loginType === item.value }"
+            :class="['role-card--' + item.value, { active: loginType === item.value }]"
             @tap="chooseLoginType(item.value)"
           >
+            <view v-if="loginType === item.value" class="role-card__check">✓</view>
+            <view class="role-card__icon">
+              <image class="role-card__img" :src="item.icon" mode="aspectFit" />
+            </view>
             <text class="role-card__name">{{ item.label }}</text>
-            <text class="role-card__desc">{{ item.desc }}</text>
           </view>
+        </view>
+
+        <view class="role-hint" :class="{ 'role-hint--on': !!loginType }">
+          <text>{{ loginType ? currentRoleDesc : '不同身份匹配不同的账号资料，请选对哦' }}</text>
         </view>
 
         <button
           v-if="loginType"
           class="btn-wechat"
+          :class="'btn-wechat--' + loginType"
+          :loading="loading"
+          :disabled="loading"
           open-type="getPhoneNumber"
           @getphonenumber="onGetPhoneNumber"
         >
-          <text>授权手机号，以{{ loginTypeLabel }}登录</text>
+          <text>{{ loading ? '登录中…' : '微信授权，以' + loginTypeLabel + '登录' }}</text>
+        </button>
+        <button v-else class="btn-wechat btn-wechat--idle" @tap="onNeedRole">
+          <text>请先选择身份</text>
         </button>
         <text v-if="loginError" class="login-error">{{ loginError }}</text>
 
@@ -190,13 +200,19 @@ const captchaImage = ref('')
 const loading = ref(false)
 const loginError = ref('')
 const loginType = ref('')
+const LAST_ROLE_KEY = 'lecheng_last_login_role'
 const loginRoles = [
-  { value: 'admin', label: '管理员', desc: '匹配管理员资料里的手机号' },
-  { value: 'teacher', label: '教师', desc: '匹配教师资料里的手机号' },
-  { value: 'parent', label: '家长', desc: '匹配学员联系电话' }
+  { value: 'teacher', label: '教师', desc: '匹配教师资料里的手机号，录课时、看学员', icon: '/static/login/role-teacher.svg' },
+  { value: 'admin', label: '管理员', desc: '匹配管理员资料里的手机号，管理门店教务', icon: '/static/login/role-admin.svg' },
+  { value: 'parent', label: '家长', desc: '匹配学员联系电话，查看孩子课时与照片', icon: '/static/login/role-parent.svg' }
 ]
 let loginSeq = 0
 const loginTypeLabel = computed(() => loginRoles.find((item) => item.value === loginType.value)?.label || '')
+const currentRoleDesc = computed(() => loginRoles.find((item) => item.value === loginType.value)?.desc || '')
+
+function onNeedRole() {
+  uni.showToast({ title: '请先选择登录身份', icon: 'none' })
+}
 const icpNumber = ICP_NUMBER
 // #ifdef MP-WEIXIN
 const isDevtools = ref(false)
@@ -295,6 +311,13 @@ onMounted(() => {
     /* ignore */
   }
   setupPrivacyAuth()
+  // 记住上次选择的身份，打开即可直接点登录
+  try {
+    const last = uni.getStorageSync(LAST_ROLE_KEY)
+    if (last && loginRoles.some((r) => r.value === last)) chooseLoginType(last)
+  } catch (e) {
+    /* ignore */
+  }
   // #endif
 })
 
@@ -303,6 +326,11 @@ function chooseLoginType(type) {
   loginSeq += 1
   loginType.value = type
   loginError.value = ''
+  try {
+    uni.setStorageSync(LAST_ROLE_KEY, type)
+  } catch (e) {
+    /* ignore */
+  }
   if (type !== 'parent' && !shouldSkipSilent()) {
     trySilentWechatLogin()
   }
@@ -534,148 +562,174 @@ function copyIcp() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 $orange: #f37021;
 
 .login-page {
   min-height: 100vh;
-  background: #f6f2ec;
+  background: #fff8ef;
 }
 
 /* 顶部品牌区 */
 .hero {
   position: relative;
   overflow: hidden;
-  padding-bottom: 150rpx;
-  background: linear-gradient(160deg, #ff9a3d 0%, #f37021 55%, #e4551a 100%);
-  border-radius: 0 0 64rpx 64rpx;
+  padding-bottom: 170rpx;
+  background: linear-gradient(170deg, #ffe7c7 0%, #fff1de 55%, #fff8ef 100%);
 }
 
 .hero-bubble {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(243, 112, 33, 0.14);
 }
 
-.hero-bubble--a { width: 360rpx; height: 360rpx; top: -120rpx; right: -100rpx; }
-.hero-bubble--b { width: 220rpx; height: 220rpx; top: 220rpx; left: -90rpx; background: rgba(255, 255, 255, 0.09); }
-.hero-bubble--c { width: 120rpx; height: 120rpx; top: 120rpx; right: 120rpx; background: rgba(255, 255, 255, 0.1); }
+.hero-bubble--a { width: 420rpx; height: 420rpx; top: -150rpx; right: -130rpx; background: rgba(255, 154, 61, 0.22); }
+.hero-bubble--b { width: 240rpx; height: 240rpx; top: 260rpx; left: -110rpx; background: rgba(58, 36, 24, 0.06); }
+.hero-bubble--c { width: 110rpx; height: 110rpx; top: 150rpx; right: 110rpx; background: rgba(243, 112, 33, 0.16); }
 
 .login-brand {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 72rpx;
+  padding-top: 64rpx;
 }
 
-/* 橙子 logo：橙色圆 + 绿叶 */
 .login-logo {
-  position: relative;
-  width: 148rpx;
-  height: 148rpx;
-  border-radius: 44rpx;
-  background: #fff;
-  box-shadow: 0 16rpx 40rpx rgba(120, 40, 0, 0.28);
-}
-
-.logo-fruit {
-  position: absolute;
-  left: 28rpx;
-  top: 40rpx;
-  width: 92rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffb15a 0%, #f37021 70%);
-}
-
-.logo-leaf {
-  position: absolute;
-  left: 76rpx;
-  top: 22rpx;
-  width: 44rpx;
-  height: 22rpx;
-  border-radius: 22rpx 0 22rpx 0;
-  background: #4fae3a;
-  transform: rotate(-18deg);
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 48rpx;
+  box-shadow: 0 22rpx 48rpx rgba(240, 86, 26, 0.32);
 }
 
 .login-title {
-  margin-top: 30rpx;
-  font-size: 48rpx;
+  margin-top: 32rpx;
+  font-size: 56rpx;
   font-weight: 800;
-  letter-spacing: 4rpx;
-  color: #fff;
+  letter-spacing: 10rpx;
+  text-indent: 10rpx;
+  color: $ink;
 }
 
 .login-sub {
-  margin-top: 12rpx;
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.88);
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  letter-spacing: 2rpx;
+  color: $muted;
 }
 
 /* 登录卡片 */
 .login-body {
   position: relative;
-  margin-top: -96rpx;
+  margin-top: -110rpx;
   padding: 0 32rpx 60rpx;
 }
 
 .login-form {
-  padding: 48rpx 36rpx 40rpx;
+  padding: 44rpx 32rpx 36rpx;
   background: #fff;
-  border-radius: 40rpx;
-  box-shadow: 0 20rpx 60rpx rgba(120, 60, 10, 0.12);
+  border-radius: 44rpx;
+  box-shadow: 0 24rpx 64rpx rgba(150, 70, 10, 0.12);
 }
 
 .form-title {
   display: block;
-  font-size: 40rpx;
+  text-align: center;
+  font-size: 38rpx;
   font-weight: 800;
   color: $ink;
 }
 
 .form-desc {
   display: block;
-  margin: 10rpx 0 28rpx;
-  font-size: 26rpx;
+  margin: 10rpx 0 32rpx;
+  text-align: center;
+  font-size: 24rpx;
   line-height: 1.5;
   color: $muted;
 }
 
 .role-list {
   display: flex;
-  flex-direction: column;
   gap: 16rpx;
-  margin-bottom: 28rpx;
 }
 
 .role-card {
-  padding: 22rpx 24rpx;
-  border-radius: 24rpx;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 0 24rpx;
+  border-radius: 28rpx;
   background: #f8f4ef;
-  border: 2rpx solid transparent;
+  border: 3rpx solid transparent;
+  transition: all 0.2s ease;
 }
 
-.role-card.active {
-  background: #fff6ee;
-  border-color: #f37021;
+.role-card__icon {
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.role-card__img {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .role-card__name {
-  display: block;
-  font-size: 30rpx;
+  margin-top: 16rpx;
+  font-size: 28rpx;
   font-weight: 700;
-  color: $ink;
-}
-
-.role-card__desc {
-  display: block;
-  margin-top: 6rpx;
-  font-size: 22rpx;
   color: $muted;
 }
+
+.role-card__check {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  width: 34rpx;
+  height: 34rpx;
+  line-height: 34rpx;
+  text-align: center;
+  font-size: 20rpx;
+  font-weight: 800;
+  color: #fff;
+  border-radius: 50%;
+}
+
+.role-card.active { transform: translateY(-4rpx); }
+.role-card.active .role-card__icon { transform: scale(1.06); }
+.role-card.active .role-card__name { color: $ink; }
+
+.role-card--teacher.active { background: #fff3ea; border-color: #f37021; }
+.role-card--teacher .role-card__check { background: #f37021; }
+.role-card--admin.active { background: #fff3ea; border-color: #f37021; }
+.role-card--admin .role-card__check { background: #f37021; }
+.role-card--parent.active { background: #fff3ea; border-color: #f37021; }
+.role-card--parent .role-card__check { background: #f37021; }
+
+.role-hint {
+  margin: 22rpx 0 26rpx;
+  padding: 16rpx 20rpx;
+  text-align: center;
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: #b7aea4;
+  background: #faf7f3;
+  border-radius: 18rpx;
+}
+
+.role-hint--on { color: #6b6158; }
 
 .btn-wechat {
   display: flex;
@@ -684,16 +738,20 @@ $orange: #f37021;
   gap: 14rpx;
   height: 104rpx;
   line-height: 104rpx;
-  background: linear-gradient(135deg, #ff8a3d, #f37021);
+  background: linear-gradient(135deg, #f98a3c, #f37021);
   color: #fff;
   font-size: 32rpx;
   font-weight: 700;
   border-radius: 999rpx;
   border: none;
-  box-shadow: 0 12rpx 28rpx rgba(243, 112, 33, 0.35);
+  box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.35);
 }
 
 .btn-wechat::after { border: none; }
+.btn-wechat--admin { background: linear-gradient(135deg, #f98a3c, #f37021); box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.3); }
+.btn-wechat--parent { background: linear-gradient(135deg, #f98a3c, #f37021); box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.3); }
+.btn-wechat--idle { background: #e9e2d9; color: #a39a90; box-shadow: none; }
+.btn-wechat[disabled] { opacity: 0.7; }
 
 .btn-wechat__icon {
   font-size: 34rpx;
@@ -788,7 +846,7 @@ $orange: #f37021;
   height: 92rpx;
   padding: 0 28rpx;
   box-sizing: border-box;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border-radius: 24rpx;
   border: 2rpx solid transparent;
   font-size: 28rpx;
@@ -836,7 +894,7 @@ $orange: #f37021;
   margin-top: 12rpx;
   height: 100rpx;
   line-height: 100rpx;
-  background: linear-gradient(135deg, #ff8a3d, #f37021);
+  background: linear-gradient(135deg, #f98a3c, #f37021);
   color: #fff;
   font-size: 32rpx;
   font-weight: 700;

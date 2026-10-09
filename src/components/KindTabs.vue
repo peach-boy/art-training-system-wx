@@ -101,7 +101,7 @@ function go(kind) {
 .kind-name {
   font-size: 29rpx;
   font-weight: 700;
-  color: #2a241f;
+  color: #2b1b12;
 }
 
 .kind-desc {
@@ -116,21 +116,21 @@ function go(kind) {
 }
 
 .kind-tab--art.active {
-  background: linear-gradient(135deg, #f37021, #ff9a4d);
+  background: linear-gradient(135deg, #f37021, #f98a3c);
   border-color: transparent;
   box-shadow: 0 10rpx 24rpx rgba(243, 112, 33, 0.3);
 }
 
 /* 晚托：紫色 */
 .kind-tab--care .kind-badge {
-  color: #6d5dfc;
-  background: rgba(109, 93, 252, 0.12);
+  color: #5b3a29;
+  background: rgba(91, 58, 41, 0.12);
 }
 
 .kind-tab--care.active {
-  background: linear-gradient(135deg, #6d5dfc, #8f82ff);
+  background: linear-gradient(135deg, #5b3a29, #8a6249);
   border-color: transparent;
-  box-shadow: 0 10rpx 24rpx rgba(109, 93, 252, 0.3);
+  box-shadow: 0 10rpx 24rpx rgba(91, 58, 41, 0.3);
 }
 
 .kind-tab.active .kind-badge {

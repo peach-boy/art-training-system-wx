@@ -1,6 +1,6 @@
 <template>
   <view class="tab-bar-wrap">
-    <view class="tab-bar" :class="'tab-bar--' + theme">
+    <view class="tab-bar">
       <view
         v-for="item in tabs"
         :key="item.key"
@@ -54,11 +54,8 @@ const parentTabs = [
   { key: 'profile', label: '我的', icon: 'profile', path: '/pages/profile/index' }
 ]
 
-/** 教师橙色、管理员蓝色、家长绿色 */
-const theme = computed(() => {
-  if (userStore.role === 'parent') return 'green'
-  return userStore.isAdmin ? 'blue' : 'orange'
-})
+/** 统一爱马仕橙 */
+const theme = 'orange'
 
 const tabs = computed(() => {
   if (userStore.role === 'parent') return parentTabs
@@ -66,7 +63,7 @@ const tabs = computed(() => {
 })
 
 function iconSrc(item) {
-  const color = props.active === item.key ? theme.value : 'gray'
+  const color = props.active === item.key ? theme : 'gray'
   return `/static/tab/${item.icon}-${color}.svg`
 }
 
@@ -97,16 +94,6 @@ function onSwitch(item) {
   box-sizing: border-box;
   --tab-color: #f37021;
   --tab-soft: rgba(243, 112, 33, 0.12);
-}
-
-.tab-bar--blue {
-  --tab-color: #2f54eb;
-  --tab-soft: rgba(47, 84, 235, 0.11);
-}
-
-.tab-bar--green {
-  --tab-color: #16a34a;
-  --tab-soft: rgba(22, 163, 74, 0.12);
 }
 
 .tab-item {

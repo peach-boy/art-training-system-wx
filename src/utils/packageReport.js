@@ -13,11 +13,11 @@ const T_W = W - PAD * 2
 const C = {
   orange: '#f37021',
   orangeDark: '#d85a0e',
-  orangeMid: '#ff9a4d',
+  orangeMid: '#f98a3c',
   orangePale: '#fff5ec',
   orangeStripe: '#fffaf5',
   white: '#ffffff',
-  text: '#2a241f',
+  text: '#2b1b12',
   muted: '#8a8178',
   border: '#eadfd3',
   borderDark: '#d9c8b6'

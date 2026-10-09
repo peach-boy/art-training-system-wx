@@ -762,7 +762,7 @@ async function handleSubmit() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 $line: #f0eae3;
 $orange: #f37021;
@@ -771,7 +771,7 @@ $orange: #f37021;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f6f2ec;
+  background: #f7f0e6;
   box-sizing: border-box;
 }
 
@@ -1016,7 +1016,7 @@ $orange: #f37021;
   text-align: center;
   font-size: 28rpx;
   color: #5c534b;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border: 2rpx solid transparent;
   border-radius: 16rpx;
 }
@@ -1063,7 +1063,7 @@ $orange: #f37021;
   width: 88rpx;
   height: 88rpx;
   border-radius: 16rpx;
-  background: #f6f2ec;
+  background: #f7f0e6;
 }
 
 .thumb-x {

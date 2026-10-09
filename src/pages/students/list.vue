@@ -1,5 +1,6 @@
 <template>
   <PageShell title="学员" :tab-bar="true" tab-active="students">
+    <StoreSwitcher v-if="userStore.isAdmin" />
     <view class="search">
       <input
         v-model="keyword"
@@ -47,6 +48,7 @@
 import { ref } from 'vue'
 import { onShow, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
+import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { studentAPI } from '@/api'
@@ -127,7 +129,7 @@ function goDetail(item) {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 
 .search {
@@ -139,7 +141,7 @@ $muted: #8a8178;
   background: #fff;
   border: 2rpx solid #dbe3ff;
   border-radius: 999rpx;
-  box-shadow: 0 6rpx 20rpx rgba(47, 84, 235, 0.06);
+  box-shadow: 0 6rpx 20rpx rgba(243, 112, 33, 0.06);
 }
 
 .search-input {
@@ -163,7 +165,7 @@ $muted: #8a8178;
   font-size: 27rpx;
   font-weight: 600;
   color: #fff;
-  background: #2f54eb;
+  background: #f37021;
   border-radius: 999rpx;
 }
 
@@ -176,7 +178,7 @@ $muted: #8a8178;
 }
 
 .count-num {
-  color: #2f54eb;
+  color: #f37021;
   font-weight: 700;
   font-size: 30rpx;
   padding: 0 4rpx;
@@ -218,8 +220,8 @@ $muted: #8a8178;
   text-align: center;
   font-size: 34rpx;
   font-weight: 700;
-  color: #2f54eb;
-  background: rgba(47, 84, 235, 0.1);
+  color: #f37021;
+  background: rgba(243, 112, 33, 0.1);
   border-radius: 28rpx;
 }
 

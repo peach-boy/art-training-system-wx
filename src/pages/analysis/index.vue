@@ -372,7 +372,7 @@ function goAttendance() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 
 .stat-head {
@@ -408,7 +408,7 @@ $muted: #8a8178;
 }
 
 .tag--art { color: #f37021; }
-.tag--care { color: #6d5dfc; }
+.tag--care { color: #5b3a29; }
 
 .go {
   font-size: 23rpx;
@@ -472,7 +472,7 @@ $muted: #8a8178;
   display: flex;
   margin-bottom: 16rpx;
   padding: 6rpx;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border-radius: 18rpx;
 }
 
@@ -487,9 +487,9 @@ $muted: #8a8178;
 }
 
 .kind-item.active { color: #fff; font-weight: 800; }
-.kind-item--all.active { background: #2a241f; }
-.kind-item--art.active { background: linear-gradient(135deg, #f37021, #ff9a4d); }
-.kind-item--care.active { background: linear-gradient(135deg, #6d5dfc, #8f82ff); }
+.kind-item--all.active { background: #2b1b12; }
+.kind-item--art.active { background: linear-gradient(135deg, #f37021, #f98a3c); }
+.kind-item--care.active { background: linear-gradient(135deg, #5b3a29, #8a6249); }
 
 .seg {
   display: flex;
@@ -527,7 +527,7 @@ $muted: #8a8178;
   text-align: center;
   font-size: 44rpx;
   color: $ink;
-  background: #f6f2ec;
+  background: #f7f0e6;
   border-radius: 18rpx;
 }
 
@@ -610,7 +610,7 @@ $muted: #8a8178;
 }
 
 .split-art { color: #f37021; }
-.split-care { color: #6d5dfc; }
+.split-care { color: #5b3a29; }
 
 .chart {
   display: flex;
@@ -640,8 +640,8 @@ $muted: #8a8178;
   max-width: 44rpx;
 }
 
-.bar--art { background: linear-gradient(180deg, #ff9a4d, #f37021); border-radius: 6rpx 6rpx 0 0; }
-.bar--care { background: linear-gradient(180deg, #8f82ff, #6d5dfc); border-radius: 6rpx 6rpx 0 0; }
+.bar--art { background: linear-gradient(180deg, #f98a3c, #f37021); border-radius: 6rpx 6rpx 0 0; }
+.bar--care { background: linear-gradient(180deg, #8a6249, #5b3a29); border-radius: 6rpx 6rpx 0 0; }
 
 .bar-label {
   margin-top: 8rpx;
@@ -669,7 +669,7 @@ $muted: #8a8178;
 }
 
 .dot--art { background: #f37021; }
-.dot--care { background: #6d5dfc; }
+.dot--care { background: #5b3a29; }
 
 .stat-loading {
   margin-top: 12rpx;

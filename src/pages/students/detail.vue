@@ -423,7 +423,7 @@ function goPackageRecords(pkg) {
 
 .action-btn--solid {
   color: #fff;
-  background: linear-gradient(135deg, #f37021, #ff8a3d);
+  background: linear-gradient(135deg, #f37021, #f98a3c);
   border: 3rpx solid transparent;
   line-height: 82rpx;
   box-shadow: 0 8rpx 20rpx rgba(243, 112, 33, 0.3);

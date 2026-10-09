@@ -1,5 +1,6 @@
 <template>
   <PageShell title="课时列表" :tab-bar="true" tab-active="attendance">
+    <StoreSwitcher v-if="userStore.isAdmin" />
     <view v-if="userStore.isAdmin" class="entry-wrap">
       <KindTabs kind="art" page="list" />
     </view>
@@ -156,6 +157,7 @@ import { ref, computed } from 'vue'
 import { onShow, onLoad, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import KindTabs from '@/components/KindTabs.vue'
+import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { requireLogin } from '@/stores/user'
 import { useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
@@ -532,7 +534,7 @@ function goForm() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 $line: #efe9e2;
 $orange: #f37021;

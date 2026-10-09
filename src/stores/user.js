@@ -13,6 +13,7 @@ import {
   takePendingPcTicket
 } from '@/utils/storage'
 import { notifyStoreChanged } from '@/utils/storeEvents'
+import { ALL_STORES_ID } from '@/utils/storeScope'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -53,12 +54,35 @@ export const useUserStore = defineStore('user', {
       }
       this.userInfo = info
       setUserInfo(info)
-      if (data.storeId != null) {
+
+      const prev = getCurrentStoreId()
+      const allowed = info.allowedStoreIds || []
+
+      if (data.role === 'super_admin') {
+        if (prev === ALL_STORES_ID || !prev) {
+          setCurrentStoreId(ALL_STORES_ID)
+          this.currentStoreId = ALL_STORES_ID
+        } else {
+          this.currentStoreId = String(prev)
+        }
+      } else if (allowed.length > 1) {
+        if (prev === ALL_STORES_ID) {
+          this.currentStoreId = ALL_STORES_ID
+        } else if (prev && allowed.some((id) => String(id) === String(prev))) {
+          this.currentStoreId = String(prev)
+        } else if (data.storeId != null) {
+          setCurrentStoreId(data.storeId)
+          this.currentStoreId = String(data.storeId)
+        } else {
+          setCurrentStoreId(allowed[0])
+          this.currentStoreId = String(allowed[0])
+        }
+      } else if (data.storeId != null) {
         setCurrentStoreId(data.storeId)
         this.currentStoreId = String(data.storeId)
-      } else if (info.allowedStoreIds?.length) {
-        setCurrentStoreId(info.allowedStoreIds[0])
-        this.currentStoreId = String(info.allowedStoreIds[0])
+      } else if (allowed.length) {
+        setCurrentStoreId(allowed[0])
+        this.currentStoreId = String(allowed[0])
       }
     },
 

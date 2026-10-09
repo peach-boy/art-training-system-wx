@@ -1,5 +1,6 @@
 <template>
   <PageShell title="课时记录" :tab-bar="true" tab-active="attendance" :show-back="false">
+    <StoreSwitcher v-if="userStore.isAdmin" />
     <view class="entry-wrap">
       <KindTabs kind="care" page="list" />
     </view>
@@ -80,6 +81,7 @@ import { ref, computed } from 'vue'
 import { onShow, onReachBottom, onPullDownRefresh } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import KindTabs from '@/components/KindTabs.vue'
+import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { careAPI } from '@/api'
@@ -270,9 +272,9 @@ onReachBottom(() => {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
-$care: #6d5dfc;
+$care: #5b3a29;
 
 .entry-wrap {
   display: flex;
@@ -308,7 +310,7 @@ $care: #6d5dfc;
   color: $care;
   font-weight: 700;
   background: #fff;
-  box-shadow: 0 3rpx 10rpx rgba(109, 93, 252, 0.18);
+  box-shadow: 0 3rpx 10rpx rgba(91, 58, 41, 0.18);
 }
 
 .date-nav {
@@ -328,7 +330,7 @@ $care: #6d5dfc;
   border-radius: 20rpx;
 }
 
-.nav-arrow--hover { background: rgba(109, 93, 252, 0.1); }
+.nav-arrow--hover { background: rgba(91, 58, 41, 0.1); }
 
 .date-picker { flex: 1; }
 
@@ -404,7 +406,7 @@ $care: #6d5dfc;
   font-size: 28rpx;
   font-weight: 700;
   color: $care;
-  background: rgba(109, 93, 252, 0.12);
+  background: rgba(91, 58, 41, 0.12);
   border-radius: 24rpx;
 }
 
@@ -432,7 +434,7 @@ $care: #6d5dfc;
   padding: 0 12rpx;
   font-size: 20rpx;
   color: $care;
-  background: rgba(109, 93, 252, 0.1);
+  background: rgba(91, 58, 41, 0.1);
   border-radius: 999rpx;
 }
 
@@ -469,7 +471,7 @@ $care: #6d5dfc;
   font-size: 27rpx;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #6d5dfc, #8f82ff);
+  background: linear-gradient(135deg, #5b3a29, #8a6249);
   border-radius: 999rpx;
 }
 

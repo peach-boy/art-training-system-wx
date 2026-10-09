@@ -93,14 +93,14 @@ function openRecords(item, tab) {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
-$green: #16a34a;
+$green: #f37021;
 
 .page {
   min-height: 100vh;
   padding: 0 32rpx calc(200rpx + env(safe-area-inset-bottom));
-  background: #f6f2ec;
+  background: #f7f0e6;
   box-sizing: border-box;
 }
 
@@ -111,9 +111,9 @@ $green: #16a34a;
   gap: 20rpx;
   margin: 20rpx 0 28rpx;
   padding: 36rpx 32rpx;
-  background: linear-gradient(135deg, #16a34a 0%, #4cc777 100%);
+  background: linear-gradient(135deg, #f37021 0%, #f98a3c 100%);
   border-radius: 32rpx;
-  box-shadow: 0 14rpx 36rpx rgba(22, 163, 74, 0.25);
+  box-shadow: 0 14rpx 36rpx rgba(243, 112, 33, 0.25);
 }
 
 .hero-text {
@@ -169,7 +169,7 @@ $green: #16a34a;
   font-size: 38rpx;
   font-weight: 800;
   color: $green;
-  background: rgba(22, 163, 74, 0.12);
+  background: rgba(243, 112, 33, 0.12);
   border-radius: 32rpx;
 }
 

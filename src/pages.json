@@ -122,8 +122,8 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "ART 教务",
+    "navigationBarTitleText": "乐橙助教",
     "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#f7f7f7"
+    "backgroundColor": "#f7f0e6"
   }
 }

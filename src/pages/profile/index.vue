@@ -86,7 +86,7 @@ function onLogout() {
   line-height: 128rpx;
   text-align: center;
   border-radius: 44rpx;
-  background: linear-gradient(135deg, #f37021, #ff9a4d);
+  background: linear-gradient(135deg, #f37021, #f98a3c);
   color: #fff;
   font-size: 56rpx;
   font-weight: 700;
@@ -96,7 +96,7 @@ function onLogout() {
   margin-top: 24rpx;
   font-size: 38rpx;
   font-weight: 700;
-  color: #2a241f;
+  color: #2b1b12;
 }
 
 .role {
@@ -109,15 +109,13 @@ function onLogout() {
 }
 
 .profile--blue {
-  background: linear-gradient(180deg, #eaf0ff 0%, #fff 100%);
-  .avatar { background: linear-gradient(135deg, #2f54eb, #6f8dff); }
-  .role { color: #2f54eb; background: rgba(47, 84, 235, 0.11); }
+  background: linear-gradient(180deg, #f3e6d6 0%, #fff 100%);
+  .avatar { background: linear-gradient(135deg, #3a2418, #5c3a27); }
+  .role { color: #3a2418; background: rgba(58, 36, 24, 0.1); }
 }
 
 .profile--green {
-  background: linear-gradient(180deg, #e6f7ec 0%, #fff 100%);
-  .avatar { background: linear-gradient(135deg, #16a34a, #4cc777); }
-  .role { color: #16a34a; background: rgba(22, 163, 74, 0.12); }
+  background: linear-gradient(180deg, #ffe9d6 0%, #fff 100%);
 }
 
 .account {
@@ -146,7 +144,7 @@ function onLogout() {
 
 .menu-title {
   font-size: 30rpx;
-  color: #2a241f;
+  color: #2b1b12;
 }
 
 .menu-title--danger { color: #c13515; }

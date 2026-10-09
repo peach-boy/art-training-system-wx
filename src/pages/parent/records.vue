@@ -201,14 +201,14 @@ onLoad(async (query) => {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 $green: #16a34a;
 
 .page {
   min-height: 100vh;
   padding: 16rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
-  background: #f6f2ec;
+  background: #f7f0e6;
   box-sizing: border-box;
 }
 
@@ -228,7 +228,7 @@ $green: #16a34a;
   font-size: 26rpx;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #16a34a, #4cc777);
+  background: linear-gradient(135deg, #f37021, #f98a3c);
   border-radius: 20rpx;
 }
 

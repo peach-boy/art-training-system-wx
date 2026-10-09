@@ -1,7 +1,7 @@
 {
-  "name": "ART教务移动版",
+  "name": "乐橙助教",
   "appid": "__UNI__ARTCMS",
-  "description": "ART 教务移动管理（员工 + 管理员）",
+  "description": "乐橙助教：录课时、看进度、家校同步",
   "versionName": "0.1.0",
   "versionCode": "100",
   "transformPx": false,

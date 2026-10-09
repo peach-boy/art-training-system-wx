@@ -210,12 +210,12 @@ async function onExport() {
 </script>
 
 <style lang="scss" scoped>
-$ink: #2a241f;
+$ink: #2b1b12;
 $muted: #8a8178;
 
 .pkg-records {
   min-height: 100vh;
-  background: #f6f2ec;
+  background: #f7f0e6;
   padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
 }
 
@@ -469,7 +469,7 @@ $muted: #8a8178;
   font-size: 30rpx;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #f37021, #ff8a3d);
+  background: linear-gradient(135deg, #f37021, #f98a3c);
   border-radius: 999rpx;
   box-shadow: 0 8rpx 20rpx rgba(243, 112, 33, 0.3);
 }
