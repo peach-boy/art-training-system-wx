@@ -8,8 +8,8 @@
     >
       <view class="kind-badge">美</view>
       <view class="kind-text">
-        <text class="kind-name">美术课时</text>
-        <text class="kind-desc">{{ page === 'form' ? '录入上课记录' : '上课记录' }}</text>
+        <view class="kind-name mp-t">美术课时</view>
+        <view class="kind-desc mp-t">{{ page === 'form' ? '录入上课记录' : '上课记录' }}</view>
       </view>
     </view>
     <view
@@ -20,8 +20,8 @@
     >
       <view class="kind-badge">晚</view>
       <view class="kind-text">
-        <text class="kind-name">晚托课时</text>
-        <text class="kind-desc">{{ page === 'form' ? '录入扣课' : '扣课记录' }}</text>
+        <view class="kind-name mp-t">晚托课时</view>
+        <view class="kind-desc mp-t">{{ page === 'form' ? '录入扣课' : '扣课记录' }}</view>
       </view>
     </view>
   </view>
@@ -61,16 +61,21 @@ function go(kind) {
 .kind-tabs {
   flex: 1;
   display: flex;
-  gap: 16rpx;
+  flex-direction: row;
 }
 
 .kind-tab {
   flex: 1;
   min-width: 0;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 16rpx;
   padding: 16rpx 20rpx;
+  margin-left: 16rpx;
+
+  &:first-child {
+    margin-left: 0;
+  }
   background: #fff;
   border: 2rpx solid #efe8df;
   border-radius: 24rpx;
@@ -82,6 +87,7 @@ function go(kind) {
 
 .kind-badge {
   flex-shrink: 0;
+  margin-right: 16rpx;
   width: 64rpx;
   height: 64rpx;
   line-height: 64rpx;
@@ -92,9 +98,7 @@ function go(kind) {
 }
 
 .kind-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2rpx;
+  flex: 1;
   min-width: 0;
 }
 
@@ -105,6 +109,7 @@ function go(kind) {
 }
 
 .kind-desc {
+  margin-top: 2rpx;
   font-size: 21rpx;
   color: #a39a90;
 }

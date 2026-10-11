@@ -4,15 +4,15 @@
       <view class="hero__bubble hero__bubble--a" />
       <view class="hero__bubble hero__bubble--b" />
       <view class="hero__brand">
-        <image class="hero__logo" src="/static/logo.svg" mode="aspectFit" />
-        <text class="hero__brand-name">乐橙助教</text>
-        <text class="hero__date">{{ todayText }}</text>
+        <AppIcon src="/static/logo.svg" :size="44" />
+        <view class="hero__brand-name mp-t">乐橙助教</view>
+        <view class="hero__date mp-t">{{ todayText }}</view>
       </view>
       <view class="hero__main">
         <view class="hero__text">
-          <text class="hero__greet">{{ greeting }}</text>
-          <text class="hero__name">{{ userStore.displayName }}</text>
-          <text class="hero__role">{{ roleDisplay.subLabel }}</text>
+          <view class="hero__greet mp-t">{{ greeting }}</view>
+          <view class="hero__name mp-t mp-t--ellipsis">{{ userStore.displayName }}</view>
+          <view class="hero__role mp-t">{{ roleDisplay.subLabel }}</view>
         </view>
         <view class="hero__avatar">{{ avatarText }}</view>
       </view>
@@ -20,57 +20,58 @@
 
     <StoreSwitcher v-if="userStore.isAdmin" />
 
-    <view class="section-title">快捷录入</view>
+    <view class="section-title mp-t">快捷录入</view>
     <view class="cta-row">
       <view class="cta" hover-class="cta--hover" @tap="goRecord">
-        <view class="cta__icon"><image class="cta__img" src="/static/home/art.svg" mode="aspectFit" /></view>
+        <view class="cta__icon"><AppIcon src="/static/home/art.svg" :size="40" /></view>
         <view class="cta__text">
-          <text class="cta__title">美术课时</text>
-          <text class="cta__sub">录入 · 可拍照留档</text>
+          <view class="cta__title mp-t">美术课时</view>
+          <view class="cta__sub mp-t">录入 · 可拍照留档</view>
         </view>
         <view class="cta__plus">+</view>
       </view>
       <view v-if="userStore.isAdmin" class="cta cta--care" hover-class="cta--hover" @tap="goCareRecord">
-        <view class="cta__icon"><image class="cta__img" src="/static/home/care.svg" mode="aspectFit" /></view>
+        <view class="cta__icon"><AppIcon src="/static/home/care.svg" :size="40" /></view>
         <view class="cta__text">
-          <text class="cta__title">晚托课时</text>
-          <text class="cta__sub">录入 · 今日扣课</text>
+          <view class="cta__title mp-t">晚托课时</view>
+          <view class="cta__sub mp-t">录入 · 今日扣课</view>
         </view>
         <view class="cta__plus">+</view>
       </view>
     </view>
 
-    <view class="section-title">常用功能</view>
+    <view class="section-title mp-t">常用功能</view>
     <view class="grid">
       <view class="tile" hover-class="tile--hover" @tap="goAttendance">
-        <view class="tile__icon tile__icon--orange"><image class="tile__img" src="/static/home/record.svg" mode="aspectFit" /></view>
-        <text class="tile__title">美术课时记录</text>
-        <text class="tile__sub">按日 / 周 / 月查看</text>
+        <view class="tile__icon tile__icon--orange"><AppIcon src="/static/home/record.svg" :size="44" /></view>
+        <view class="tile__title mp-t">美术课时记录</view>
+        <view class="tile__sub mp-t">按日 / 周 / 月查看</view>
       </view>
       <view v-if="userStore.isAdmin" class="tile" hover-class="tile--hover" @tap="goCareList">
-        <view class="tile__icon tile__icon--care"><image class="tile__img" src="/static/home/care.svg" mode="aspectFit" /></view>
-        <text class="tile__title">晚托课时记录</text>
-        <text class="tile__sub">按日 / 周 / 月查看</text>
+        <view class="tile__icon tile__icon--care"><AppIcon src="/static/home/care.svg" :size="44" /></view>
+        <view class="tile__title mp-t">晚托课时记录</view>
+        <view class="tile__sub mp-t">按日 / 周 / 月查看</view>
       </view>
       <view v-if="userStore.isAdmin" class="tile" hover-class="tile--hover" @tap="goStudents">
-        <view class="tile__icon tile__icon--blue"><image class="tile__img" src="/static/home/students.svg" mode="aspectFit" /></view>
-        <text class="tile__title">学员列表</text>
-        <text class="tile__sub">课包与剩余课时</text>
+        <view class="tile__icon tile__icon--blue"><AppIcon src="/static/home/students.svg" :size="44" /></view>
+        <view class="tile__title mp-t">学员列表</view>
+        <view class="tile__sub mp-t">课包与剩余课时</view>
       </view>
       <view v-if="userStore.isFinanceStaff" class="tile" hover-class="tile--hover" @tap="goCost">
-        <view class="tile__icon tile__icon--teal"><image class="tile__img" src="/static/home/cost.svg" mode="aspectFit" /></view>
-        <text class="tile__title">录入成本</text>
-        <text class="tile__sub">门店成本与支出</text>
+        <view class="tile__icon tile__icon--teal"><AppIcon src="/static/home/cost.svg" :size="44" /></view>
+        <view class="tile__title mp-t">录入成本</view>
+        <view class="tile__sub mp-t">门店成本与支出</view>
       </view>
     </view>
   </PageShell>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
 import StoreSwitcher from '@/components/StoreSwitcher.vue'
+import AppIcon from '@/components/AppIcon.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { getRoleDisplay } from '@/utils/role'
 
@@ -137,7 +138,6 @@ function goCost() {
 $ink: #2b1b12;
 $muted: #8a8178;
 
-/* 顶部问候卡：爱马仕橙 / 马鞍棕 */
 .hero {
   position: relative;
   overflow: hidden;
@@ -169,17 +169,13 @@ $muted: #8a8178;
 .hero__brand {
   position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12rpx;
-}
-
-.hero__logo {
-  width: 44rpx;
-  height: 44rpx;
-  border-radius: 12rpx;
+  width: 100%;
 }
 
 .hero__brand-name {
+  margin-left: 12rpx;
   font-size: 26rpx;
   font-weight: 700;
   letter-spacing: 2rpx;
@@ -189,23 +185,21 @@ $muted: #8a8178;
   margin-left: auto;
   font-size: 23rpx;
   opacity: 0.88;
+  text-align: right;
 }
 
 .hero__main {
-  position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
   margin-top: 34rpx;
 }
 
 .hero__text {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  padding-right: 20rpx;
 }
 
 .hero__greet {
@@ -214,16 +208,14 @@ $muted: #8a8178;
 }
 
 .hero__name {
-  max-width: 100%;
-  margin: 6rpx 0 14rpx;
+  margin-top: 6rpx;
+  margin-bottom: 14rpx;
   font-size: 50rpx;
   font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .hero__role {
+  display: inline-block;
   padding: 4rpx 20rpx;
   font-size: 22rpx;
   font-weight: 600;
@@ -252,10 +244,9 @@ $muted: #8a8178;
   color: $ink;
 }
 
-/* 快捷录入 */
 .cta-row {
   display: flex;
-  gap: 20rpx;
+  flex-direction: row;
   margin-bottom: 28rpx;
 }
 
@@ -263,12 +254,16 @@ $muted: #8a8178;
   flex: 1;
   min-width: 0;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 16rpx;
   padding: 28rpx 22rpx;
   border-radius: 30rpx;
   background: linear-gradient(135deg, #f37021 0%, #f98a3c 100%);
   box-shadow: 0 14rpx 32rpx rgba(243, 112, 33, 0.26);
+
+  & + .cta {
+    margin-left: 20rpx;
+  }
 }
 
 .cta--care {
@@ -285,18 +280,15 @@ $muted: #8a8178;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 16rpx;
   background: #fff;
   border-radius: 24rpx;
+  overflow: hidden;
 }
-
-.cta__img { width: 40rpx; height: 40rpx; }
 
 .cta__text {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
 }
 
 .cta__title {
@@ -306,6 +298,7 @@ $muted: #8a8178;
 }
 
 .cta__sub {
+  margin-top: 6rpx;
   font-size: 21rpx;
   color: rgba(255, 255, 255, 0.88);
 }
@@ -320,20 +313,22 @@ $muted: #8a8178;
   color: #f37021;
   background: rgba(255, 255, 255, 0.92);
   border-radius: 50%;
+  margin-left: 8rpx;
 }
 
 .cta--care .cta__plus { color: #5b3a29; }
 
-/* 常用功能 */
 .grid {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 20rpx;
+  justify-content: space-between;
 }
 
 .tile {
   box-sizing: border-box;
-  width: calc(50% - 10rpx);
+  width: 48%;
+  margin-bottom: 20rpx;
   padding: 28rpx 26rpx 26rpx;
   background: #fff;
   border-radius: 30rpx;
@@ -350,9 +345,8 @@ $muted: #8a8178;
   justify-content: center;
   margin-bottom: 20rpx;
   border-radius: 26rpx;
+  overflow: hidden;
 }
-
-.tile__img { width: 44rpx; height: 44rpx; }
 
 .tile__icon--orange { background: rgba(243, 112, 33, 0.12); }
 .tile__icon--care { background: rgba(91, 58, 41, 0.12); }
@@ -360,14 +354,12 @@ $muted: #8a8178;
 .tile__icon--teal { background: rgba(26, 166, 166, 0.14); }
 
 .tile__title {
-  display: block;
   font-size: 29rpx;
   font-weight: 700;
   color: $ink;
 }
 
 .tile__sub {
-  display: block;
   margin-top: 6rpx;
   font-size: 22rpx;
   color: $muted;

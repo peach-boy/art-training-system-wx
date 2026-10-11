@@ -11,11 +11,7 @@
         @tap="onSwitch(item)"
       >
         <view class="tab-icon-wrap">
-          <image
-            class="tab-icon"
-            :src="iconSrc(item)"
-            mode="aspectFit"
-          />
+          <AppIcon :src="iconSrc(item)" :size="40" />
         </view>
         <text class="tab-label">{{ item.label }}</text>
       </view>
@@ -27,6 +23,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useUserStore } from '@/stores/user'
+import AppIcon from '@/components/AppIcon.vue'
 
 const props = defineProps({
   active: { type: String, default: 'home' }
@@ -118,11 +115,7 @@ function onSwitch(item) {
   justify-content: center;
   border-radius: 999rpx;
   transition: background 0.2s;
-}
-
-.tab-icon {
-  width: 40rpx;
-  height: 40rpx;
+  overflow: hidden;
 }
 
 .tab-label {

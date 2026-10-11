@@ -3,7 +3,7 @@
     <view class="page-shell__status" :style="{ height: statusBarHeight + 'px' }" />
     <view v-if="title" class="page-shell__header">
       <BackBar v-if="showBack" />
-      <text class="page-shell__title">{{ title }}</text>
+      <view class="page-shell__title mp-t">{{ title }}</view>
       <view class="page-shell__extra">
         <slot name="extra" />
       </view>

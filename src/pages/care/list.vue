@@ -27,14 +27,14 @@
           @change="onMonthChange"
         >
           <view class="date-main">
-            <text class="date-title">{{ dateTitle }}</text>
-            <text class="date-sub">{{ dateSub }}</text>
+            <view class="date-title mp-t">{{ dateTitle }}</view>
+            <view class="date-sub mp-t">{{ dateSub }}</view>
           </view>
         </picker>
         <picker v-else class="date-picker" mode="date" :value="anchorDate" @change="onAnchorChange">
           <view class="date-main">
-            <text class="date-title">{{ dateTitle }}</text>
-            <text class="date-sub">{{ dateSub }}</text>
+            <view class="date-title mp-t">{{ dateTitle }}</view>
+            <view class="date-sub mp-t">{{ dateSub }}</view>
           </view>
         </picker>
         <view class="nav-arrow" hover-class="nav-arrow--hover" @tap="shiftPeriod(1)">›</view>
@@ -371,6 +371,7 @@ $care: #5b3a29;
 
 .date-nav {
   display: flex;
+  flex-direction: row;
   align-items: center;
   margin-top: 16rpx;
 }
@@ -388,24 +389,32 @@ $care: #5b3a29;
 
 .nav-arrow--hover { background: rgba(91, 58, 41, 0.1); }
 
-.date-picker { flex: 1; }
+.date-picker {
+  flex: 1;
+  min-width: 0;
+  margin: 0 12rpx;
+}
 
 .date-main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4rpx;
+  justify-content: center;
+  min-height: 80rpx;
 }
 
 .date-title {
   font-size: 34rpx;
   font-weight: 800;
   color: $ink;
+  text-align: center;
 }
 
 .date-sub {
+  margin-top: 4rpx;
   font-size: 22rpx;
   color: $muted;
+  text-align: center;
 }
 
 .teacher-filter {

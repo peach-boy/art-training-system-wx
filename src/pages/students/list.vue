@@ -26,11 +26,12 @@
       hover-class="stu--hover"
       @tap="goDetail(item)"
     >
+      <view class="stu-accent" :class="'stu-accent--' + (item.feeStatus || 'normal')" />
       <view class="stu-avatar">{{ (item.name || '学').slice(0, 1) }}</view>
       <view class="stu-main">
         <view class="stu-head">
-          <text class="stu-name">{{ item.name }}</text>
-          <text class="stu-tag" :class="'stu-tag--' + (item.feeStatus || 'normal')">{{ feeLabel(item.feeStatus) }}</text>
+          <view class="stu-name mp-t mp-t--ellipsis">{{ item.name }}</view>
+          <view class="stu-tag mp-t" :class="'stu-tag--' + (item.feeStatus || 'normal')">{{ feeLabel(item.feeStatus) }}</view>
         </view>
         <view class="stu-meta">
           <text>剩余 <text class="stu-remain">{{ item.latestRemainingClasses ?? '—' }}</text> 节</text>
@@ -187,33 +188,33 @@ $muted: #8a8178;
 .stu {
   position: relative;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 20rpx;
   margin-bottom: 16rpx;
   padding: 24rpx 24rpx 24rpx 32rpx;
   background: #fff;
   border-radius: 24rpx;
   box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8rpx;
-    background: #4c9a2a;
-  }
 }
 
-.stu--overdue::before { background: #c13515; }
-.stu--warning::before { background: #d46b08; }
-.stu--not_started::before { background: #b7aea4; }
+.stu-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8rpx;
+  background: #4c9a2a;
+}
+
+.stu-accent--overdue { background: #c13515; }
+.stu-accent--warning { background: #d46b08; }
+.stu-accent--not_started { background: #b7aea4; }
 .stu--hover { background: #fbf8f5; }
 
 .stu-avatar {
   flex-shrink: 0;
+  margin-left: 20rpx;
   width: 84rpx;
   height: 84rpx;
   line-height: 84rpx;
@@ -232,22 +233,21 @@ $muted: #8a8178;
 
 .stu-head {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12rpx;
 }
 
 .stu-name {
+  flex: 1;
   min-width: 0;
   font-size: 31rpx;
   font-weight: 700;
   color: $ink;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .stu-tag {
   flex-shrink: 0;
+  margin-left: 12rpx;
   font-size: 21rpx;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;

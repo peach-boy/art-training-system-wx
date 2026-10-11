@@ -1,18 +1,23 @@
 <template>
-  <view v-if="show" class="store-switch card">
-    <text class="store-switch__label">当前店铺</text>
-    <picker :range="pickerLabels" :value="storeIndex" @change="onStoreChange">
+  <view v-if="show" class="store-switch">
+    <view class="store-switch__label mp-t">当前店铺</view>
+    <picker
+      class="store-switch__picker-host"
+      :range="pickerLabels"
+      :value="storeIndex"
+      @change="onStoreChange"
+    >
       <view class="store-switch__picker">
         <view class="store-dot" :class="{ 'store-dot--all': isAllMode }" />
-        <text class="store-switch__name">{{ currentStoreName }}</text>
-        <text class="store-switch__arrow">▼</text>
+        <view class="store-switch__name mp-t mp-t--ellipsis">{{ currentStoreName }}</view>
+        <view class="store-switch__arrow mp-t">▾</view>
       </view>
     </picker>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
 import { storeAPI } from '@/api'
@@ -71,6 +76,10 @@ function syncPickerIndex() {
   if (idx < 0) idx = 0
   storeIndex.value = idx
 }
+
+watch([pickerOptions, currentId], () => {
+  syncPickerIndex()
+})
 
 function ensureValidStoreSelection() {
   const opts = pickerOptions.value
@@ -143,38 +152,48 @@ defineExpose({ reload: loadStores })
 <style lang="scss" scoped>
 .store-switch {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-  padding: 24rpx 28rpx;
+  padding: 22rpx 24rpx;
   margin-bottom: 24rpx;
-  background: var(--canvas);
-  border-radius: var(--radius-md);
+  background: #fff;
+  border-radius: 28rpx;
   border: 1rpx solid var(--hairline);
+  box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
 }
 
 .store-switch__label {
   flex-shrink: 0;
+  width: 132rpx;
   font-size: 26rpx;
   color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* 微信 picker 默认不占宽，需单独拉满右侧 */
+.store-switch__picker-host {
+  flex: 1;
+  width: 0;
+  min-width: 0;
 }
 
 .store-switch__picker {
-  flex: 1;
-  min-width: 0;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10rpx;
-  padding: 12rpx 20rpx;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 72rpx;
+  padding: 14rpx 20rpx;
   background: var(--bg-page);
-  border-radius: var(--radius-sm);
+  border-radius: 20rpx;
 }
 
 .store-dot {
   flex-shrink: 0;
-  width: 14rpx;
-  height: 14rpx;
+  width: 16rpx;
+  height: 16rpx;
+  margin-right: 12rpx;
   border-radius: 50%;
   background: #f37021;
 }
@@ -187,16 +206,17 @@ defineExpose({ reload: loadStores })
   flex: 1;
   min-width: 0;
   font-size: 28rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-ink);
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: left;
+  line-height: 1.35;
 }
 
 .store-switch__arrow {
-  font-size: 20rpx;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: 22rpx;
   color: var(--text-muted);
+  line-height: 1;
 }
 </style>

@@ -7,6 +7,7 @@
     <view class="filter-card">
       <!-- 时间 -->
       <view class="block block--time">
+        <view class="block-accent block-accent--blue" />
         <view class="seg">
           <view
             v-for="m in periodModes"
@@ -28,14 +29,14 @@
             @change="onMonthChange"
           >
             <view class="date-main">
-              <text class="date-title">{{ dateTitle }}</text>
-              <text class="date-sub">{{ dateSub }}</text>
+              <view class="date-title mp-t">{{ dateTitle }}</view>
+              <view class="date-sub mp-t">{{ dateSub }}</view>
             </view>
           </picker>
           <picker v-else class="date-picker" mode="date" :value="anchorDate" @change="onAnchorChange">
             <view class="date-main">
-              <text class="date-title">{{ dateTitle }}</text>
-              <text class="date-sub">{{ dateSub }}</text>
+              <view class="date-title mp-t">{{ dateTitle }}</view>
+              <view class="date-sub mp-t">{{ dateSub }}</view>
             </view>
           </picker>
           <view class="nav-arrow" hover-class="nav-arrow--hover" @tap="shiftPeriod(1)">›</view>
@@ -54,6 +55,7 @@
 
       <!-- 学员 -->
       <view class="block block--student">
+        <view class="block-accent block-accent--orange" />
         <view v-if="filterStudentId" class="picked">
           <view class="picked-chip">
             <text class="picked-name">{{ studentLabel }}</text>
@@ -130,15 +132,16 @@
           hover-class="record--hover"
           @tap="goDetail(item)"
         >
+          <view class="record-accent" :class="'record-accent--' + (item.lessonType || 'regular')" />
           <view class="record-head">
-            <text class="record-name">{{ item.studentName || '学员' }}</text>
-            <text class="record-tag" :class="'record-tag--' + (item.lessonType || 'regular')">{{ lessonTypeLabel(item.lessonType) }}</text>
-            <text class="record-arrow">›</text>
+            <view class="record-name mp-t mp-t--ellipsis">{{ item.studentName || '学员' }}</view>
+            <view class="record-tag mp-t" :class="'record-tag--' + (item.lessonType || 'regular')">{{ lessonTypeLabel(item.lessonType) }}</view>
+            <view class="record-arrow mp-t">›</view>
           </view>
           <view class="record-meta">
-            <text class="record-course">{{ item.courseTypeName || '未填课程类型' }}</text>
-            <text v-if="item.lessonType !== 'temp'" class="record-deduct">扣 {{ formatClassHours(item.classesDeducted) }} 节</text>
-            <text v-else-if="item.income != null" class="record-deduct">¥{{ item.income }}</text>
+            <view class="record-course mp-t mp-t--ellipsis">{{ item.courseTypeName || '未填课程类型' }}</view>
+            <view v-if="item.lessonType !== 'temp'" class="record-deduct mp-t">扣 {{ formatClassHours(item.classesDeducted) }} 节</view>
+            <view v-else-if="item.income != null" class="record-deduct mp-t">¥{{ item.income }}</view>
           </view>
           <view v-if="item.packageName || item.coursewareName" class="record-extra">
             <text v-if="item.packageName" class="extra-item">课包 {{ item.packageName }}</text>
@@ -557,26 +560,26 @@ $blue: #2f6bff;
 .block {
   position: relative;
   padding: 24rpx 24rpx 24rpx 32rpx;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 24rpx;
-    bottom: 24rpx;
-    width: 8rpx;
-    border-radius: 0 8rpx 8rpx 0;
-  }
 }
+
+.block-accent {
+  position: absolute;
+  left: 0;
+  top: 24rpx;
+  bottom: 24rpx;
+  width: 8rpx;
+  border-radius: 0 8rpx 8rpx 0;
+}
+
+.block-accent--blue { background: $blue; }
+.block-accent--orange { background: $orange; }
 
 .block--time {
   background: linear-gradient(180deg, #f5f8ff 0%, #fff 70%);
-  &::before { background: $blue; }
 }
 
 .block--student {
   background: linear-gradient(180deg, #fff7f1 0%, #fff 70%);
-  &::before { background: $orange; }
 }
 
 .divider {
@@ -612,8 +615,8 @@ $blue: #2f6bff;
 /* 日期导航 */
 .date-nav {
   display: flex;
+  flex-direction: row;
   align-items: stretch;
-  gap: 12rpx;
   margin-top: 20rpx;
 }
 
@@ -637,16 +640,17 @@ $blue: #2f6bff;
 .date-picker {
   flex: 1;
   min-width: 0;
+  margin-left: 12rpx;
+  margin-right: 12rpx;
 }
 
 .date-main {
-  height: 100%;
+  min-height: 96rpx;
   padding: 16rpx 12rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4rpx;
   background: #fff;
   border: 1rpx solid #dbe5ff;
   border-radius: 20rpx;
@@ -656,11 +660,14 @@ $blue: #2f6bff;
   font-size: 34rpx;
   font-weight: 700;
   color: $ink;
+  text-align: center;
 }
 
 .date-sub {
+  margin-top: 4rpx;
   font-size: 22rpx;
   color: $muted;
+  text-align: center;
 }
 
 .date-foot {
@@ -891,42 +898,41 @@ $blue: #2f6bff;
   border-radius: 24rpx;
   box-shadow: 0 6rpx 24rpx rgba(42, 36, 31, 0.05);
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8rpx;
-    background: #3d7dff;
-  }
 }
 
+.record-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8rpx;
+  background: #3d7dff;
+}
+
+.record-accent--trial { background: #1aa6a6; }
+.record-accent--gift { background: #4c9a2a; }
+.record-accent--temp { background: #e07a1a; }
+.record-accent--renewal_pending { background: #7a45c9; }
+
 .record--hover { background: #fbf8f5; }
-.record--trial::before { background: #1aa6a6; }
-.record--gift::before { background: #4c9a2a; }
-.record--temp::before { background: #e07a1a; }
-.record--renewal_pending::before { background: #7a45c9; }
 
 .record-head {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12rpx;
 }
 
 .record-name {
+  flex: 1;
   min-width: 0;
   font-size: 32rpx;
   font-weight: 700;
   color: $ink;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .record-tag {
   flex-shrink: 0;
+  margin-left: 12rpx;
   font-size: 21rpx;
   padding: 4rpx 14rpx;
   border-radius: 999rpx;
@@ -948,9 +954,9 @@ $blue: #2f6bff;
 
 .record-meta {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12rpx;
   margin-top: 14rpx;
 }
 

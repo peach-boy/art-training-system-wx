@@ -40,14 +40,14 @@
           @change="onMonthChange"
         >
           <view class="date-main">
-            <text class="date-title">{{ dateTitle }}</text>
-            <text class="date-sub">点击选择月份</text>
+            <view class="date-title mp-t">{{ dateTitle }}</view>
+            <view class="date-sub mp-t">点击选择月份</view>
           </view>
         </picker>
         <picker v-else class="date-picker" mode="date" :value="anchorDate" @change="onAnchorChange">
           <view class="date-main">
-            <text class="date-title">{{ dateTitle }}</text>
-            <text class="date-sub">{{ periodMode === 'day' ? weekdayOf(anchorDate) + ' · ' : '周一至周日 · ' }}点击选择</text>
+            <view class="date-title mp-t">{{ dateTitle }}</view>
+            <view class="date-sub mp-t">{{ periodMode === 'day' ? weekdayOf(anchorDate) + ' · ' : '周一至周日 · ' }}点击选择</view>
           </view>
         </picker>
         <view class="nav-arrow" hover-class="nav-arrow--hover" @tap="shiftPeriod(1)">›</view>

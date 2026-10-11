@@ -1,0 +1,26 @@
+/**
+ * 微信小程序布局兜底：
+ * - 装饰性 SVG 请用 AppIcon 组件
+ * - flex 内标题用 .mp-t 块级展示
+ */
+.mp-t {
+  display: block;
+  box-sizing: border-box;
+}
+
+.mp-t--ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.mp-flex-col {
+  display: flex;
+  flex-direction: column;
+}

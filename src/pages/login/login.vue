@@ -7,9 +7,9 @@
       <view class="hero-bubble hero-bubble--c" />
       <view class="login-status" :style="{ height: statusBarHeight + 'px' }" />
       <view class="login-brand">
-        <image class="login-logo" src="/static/logo.svg" mode="aspectFit" />
-        <text class="login-title">乐橙助教</text>
-        <text class="login-sub">录课时 · 看进度 · 家校同步</text>
+        <AppIcon class="login-logo-wrap" src="/static/logo.svg" :size="180" />
+        <view class="login-title">乐橙助教</view>
+        <view class="login-sub">录课时 · 看进度 · 家校同步</view>
       </view>
     </view>
 
@@ -17,8 +17,8 @@
     <view class="login-body">
       <!-- #ifdef MP-WEIXIN -->
       <view class="login-form login-form--wechat">
-        <text class="form-title">欢迎使用</text>
-        <text class="form-desc">请选择你的身份，用微信手机号一键登录</text>
+        <view class="form-title">欢迎使用</view>
+        <view class="form-desc">请选择你的身份，用微信手机号一键登录</view>
 
         <view class="role-list">
           <view
@@ -29,10 +29,10 @@
             @tap="chooseLoginType(item.value)"
           >
             <view v-if="loginType === item.value" class="role-card__check">✓</view>
-            <view class="role-card__icon">
-              <image class="role-card__img" :src="item.icon" mode="aspectFit" />
+            <view class="role-card__icon" :class="'role-card__icon--' + item.value">
+              <AppIcon :src="item.icon" :size="48" />
             </view>
-            <text class="role-card__name">{{ item.label }}</text>
+            <view class="role-card__name">{{ item.label }}</view>
           </view>
         </view>
 
@@ -203,6 +203,7 @@ import { PHONE_PATTERN, ICP_NUMBER } from '@/utils/config'
 import { useUserStore, navigateAfterLogin } from '@/stores/user'
 import { isLoggedIn, setSkipSilentWechatLogin, shouldSkipSilentWechatLogin } from '@/utils/storage'
 import { inputEventValue } from '@/utils/input'
+import AppIcon from '@/components/AppIcon.vue'
 
 const userStore = useUserStore()
 let skipSilentOnce = false
@@ -218,9 +219,9 @@ const loginError = ref('')
 const loginType = ref('')
 const LAST_ROLE_KEY = 'lecheng_last_login_role'
 const loginRoles = [
-  { value: 'teacher', label: '教师', desc: '匹配教师资料里的手机号，录课时、看学员', icon: '/static/login/role-teacher.svg' },
-  { value: 'admin', label: '管理员', desc: '匹配管理员资料里的手机号，管理门店教务', icon: '/static/login/role-admin.svg' },
-  { value: 'parent', label: '家长', desc: '匹配学员联系电话，查看孩子课时与照片', icon: '/static/login/role-parent.svg' }
+  { value: 'teacher', label: '教师', icon: '/static/login/role-teacher.svg', desc: '匹配教师资料里的手机号，录课时、看学员' },
+  { value: 'admin', label: '管理员', icon: '/static/login/role-admin.svg', desc: '匹配管理员资料里的手机号，管理门店教务' },
+  { value: 'parent', label: '家长', icon: '/static/login/role-parent.svg', desc: '匹配学员联系电话，查看孩子课时与照片' }
 ]
 let loginSeq = 0
 const loginTypeLabel = computed(() => loginRoles.find((item) => item.value === loginType.value)?.label || '')
@@ -635,30 +636,36 @@ $orange: #f37021;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
   padding-top: 64rpx;
 }
 
-.login-logo {
-  width: 180rpx;
-  height: 180rpx;
+.login-logo-wrap {
   border-radius: 48rpx;
   box-shadow: 0 22rpx 48rpx rgba(240, 86, 26, 0.32);
+  overflow: hidden;
 }
 
 .login-title {
+  display: block;
   margin-top: 32rpx;
   font-size: 56rpx;
   font-weight: 800;
   letter-spacing: 10rpx;
   text-indent: 10rpx;
   color: $ink;
+  text-align: center;
 }
 
 .login-sub {
+  display: block;
   margin-top: 14rpx;
+  padding: 0 40rpx;
   font-size: 25rpx;
   letter-spacing: 2rpx;
   color: $muted;
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* 登录卡片 */
@@ -694,44 +701,54 @@ $orange: #f37021;
 
 .role-list {
   display: flex;
-  gap: 16rpx;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .role-card {
   position: relative;
   flex: 1;
+  width: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28rpx 0 24rpx;
+  padding: 28rpx 8rpx 24rpx;
+  margin-left: 16rpx;
   border-radius: 28rpx;
   background: #f8f4ef;
   border: 3rpx solid transparent;
   transition: all 0.2s ease;
+
+  &:first-child {
+    margin-left: 0;
+  }
 }
 
 .role-card__icon {
   width: 88rpx;
   height: 88rpx;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 28rpx;
   background: #fff;
+  overflow: hidden;
   transition: transform 0.2s ease;
-}
-
-.role-card__img {
-  width: 48rpx;
-  height: 48rpx;
+  box-sizing: border-box;
 }
 
 .role-card__name {
+  display: block;
   margin-top: 16rpx;
   font-size: 28rpx;
   font-weight: 700;
   color: $muted;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .role-card__check {
