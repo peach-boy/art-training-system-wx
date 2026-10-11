@@ -606,9 +606,9 @@ function handlePickFail(err) {
   if (/cancel/i.test(msg)) return
   if (/112|scope is not declared/i.test(msg)) {
     uni.showModal({
-      title: '公众平台未声明相册/摄像头',
+      title: '公众平台未声明选择照片',
       content:
-        '请到微信公众平台 → 设置 → 用户隐私保护指引中勾选「收集你选中的照片或视频信息」和「访问你的摄像头」，审核通过后再试；预览版还需在「版本管理 → 提交审核」里同步开发版隐私指引。详见项目 docs/WECHAT-PRIVACY-ALBUM-CAMERA.md。仅在小程序里点同意无法代替这一项。',
+        '请到微信公众平台 → 设置 → 用户隐私保护指引中勾选「收集你选中的照片或视频信息」，审核通过后再试；预览版还需在「版本管理 → 提交审核」里同步开发版隐私指引。详见项目 docs/WECHAT-PRIVACY-ALBUM-CAMERA.md。仅在小程序里点同意无法代替这一项。',
       showCancel: false,
       confirmText: '我知道了'
     })
