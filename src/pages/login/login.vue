@@ -3,8 +3,6 @@
     <!-- 顶部品牌区 -->
     <view class="hero">
       <view class="hero-bubble hero-bubble--a" />
-      <view class="hero-bubble hero-bubble--b" />
-      <view class="hero-bubble hero-bubble--c" />
       <view class="login-status" :style="{ height: statusBarHeight + 'px' }" />
       <view class="login-brand">
         <AppIcon class="login-logo-wrap" src="/static/logo.svg" :size="180" />
@@ -16,29 +14,23 @@
     <!-- 登录卡片 -->
     <view class="login-body">
       <!-- #ifdef MP-WEIXIN -->
-      <view class="login-form login-form--wechat">
-        <view class="form-title">欢迎使用</view>
-        <view class="form-desc">请选择你的身份，用微信手机号一键登录</view>
+      <view class="login-form login-form--phone">
+        <view class="form-title">手机号快捷登录</view>
+        <view class="form-desc">自动识别你的身份，无需手动选择</view>
 
-        <view class="role-list">
-          <view
-            v-for="item in loginRoles"
-            :key="item.value"
-            class="role-card"
-            :class="['role-card--' + item.value, { active: loginType === item.value }]"
-            @tap="chooseLoginType(item.value)"
-          >
-            <view v-if="loginType === item.value" class="role-card__check">✓</view>
-            <view class="role-card__icon" :class="'role-card__icon--' + item.value">
-              <AppIcon :src="item.icon" :size="48" />
-            </view>
-            <view class="role-card__name">{{ item.label }}</view>
-          </view>
-        </view>
-
-        <view class="role-hint" :class="{ 'role-hint--on': !!loginType }">
-          <text>{{ loginType ? currentRoleDesc : '不同身份匹配不同的账号资料，请选对哦' }}</text>
-        </view>
+        <button
+          v-if="agreedToTerms"
+          class="btn-phone-login"
+          :loading="loading"
+          :disabled="loading"
+          open-type="getPhoneNumber"
+          @getphonenumber="onGetPhoneNumber"
+        >
+          <text>{{ loading ? '登录中…' : '一键登录' }}</text>
+        </button>
+        <button v-else class="btn-phone-login" @tap="onLoginNeedAgree">
+          <text>一键登录</text>
+        </button>
 
         <view class="agree-row">
           <view class="agree-check" :class="{ 'agree-check--on': agreedToTerms }" @tap="toggleAgree">
@@ -52,31 +44,9 @@
           </view>
         </view>
 
-        <button
-          v-if="loginType && agreedToTerms"
-          class="btn-wechat"
-          :class="'btn-wechat--' + loginType"
-          :loading="loading"
-          :disabled="loading"
-          open-type="getPhoneNumber"
-          @getphonenumber="onGetPhoneNumber"
-        >
-          <text>{{ loading ? '登录中…' : '微信授权，以' + loginTypeLabel + '登录' }}</text>
-        </button>
-        <button
-          v-else-if="loginType"
-          class="btn-wechat"
-          :class="'btn-wechat--' + loginType"
-          @tap="onLoginNeedAgree"
-        >
-          <text>微信授权，以{{ loginTypeLabel }}登录</text>
-        </button>
-        <button v-else class="btn-wechat btn-wechat--idle" @tap="onNeedRole">
-          <text>请先选择身份</text>
-        </button>
         <text v-if="loginError" class="login-error">{{ loginError }}</text>
 
-        <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在手机微信中操作。</text>
+        <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在真机上操作。</text>
         <text class="demo-entry" @tap="openDemoLogin">体验账号登录</text>
       </view>
 
@@ -103,10 +73,37 @@
             :adjust-position="true"
             @input="password = inputEventValue($event)"
           />
-          <button class="btn-wechat demo-submit" :loading="loading" :disabled="loading" @tap="handleDemoLogin">
+          <button class="btn-phone-login demo-submit" :loading="loading" :disabled="loading" @tap="handleDemoLogin">
             登录
           </button>
           <button class="btn-privacy-cancel" @tap="closeDemoLogin">取消</button>
+        </view>
+      </view>
+
+      <!-- 同一手机号存在多个身份时选择 -->
+      <view v-if="showRoleChoice" class="privacy-mask" @tap="cancelRoleChoice">
+        <view class="role-sheet" @tap.stop>
+          <text class="privacy-title role-sheet__title">选择登录身份</text>
+          <text class="role-sheet__sub">该手机号对应多个身份，请选择本次使用的身份</text>
+          <view
+            v-for="item in roleChoices"
+            :key="item.value"
+            class="role-option"
+            hover-class="role-option--hover"
+            :class="{ 'role-option--busy': choosingRole }"
+            @tap="selectRole(item.value)"
+          >
+            <view class="role-option__icon">
+              <AppIcon :src="item.icon" :size="48" />
+            </view>
+            <view class="role-option__main">
+              <text class="role-option__name">{{ item.label }}</text>
+              <text class="role-option__desc">{{ item.desc }}</text>
+            </view>
+            <text v-if="item.value === lastRole" class="role-option__tag">上次使用</text>
+            <text v-else class="role-option__arrow">›</text>
+          </view>
+          <button class="btn-privacy-cancel" @tap="cancelRoleChoice">取消</button>
         </view>
       </view>
 
@@ -119,7 +116,7 @@
           </text>
           <button
             id="agree-btn"
-            class="btn-wechat"
+            class="btn-phone-login"
             open-type="agreePrivacyAuthorization"
             @agreeprivacyauthorization="onPrivacyPopupAgree"
           >
@@ -216,19 +213,88 @@ const captchaCode = ref('')
 const captchaImage = ref('')
 const loading = ref(false)
 const loginError = ref('')
-const loginType = ref('')
 const LAST_ROLE_KEY = 'lecheng_last_login_role'
 const loginRoles = [
-  { value: 'teacher', label: '教师', icon: '/static/login/role-teacher.svg', desc: '匹配教师资料里的手机号，录课时、看学员' },
-  { value: 'admin', label: '管理员', icon: '/static/login/role-admin.svg', desc: '匹配管理员资料里的手机号，管理门店教务' },
-  { value: 'parent', label: '家长', icon: '/static/login/role-parent.svg', desc: '匹配学员联系电话，查看孩子课时与照片' }
+  { value: 'admin', label: '管理员', icon: '/static/login/role-admin.svg', desc: '管理门店教务与数据' },
+  { value: 'teacher', label: '教师', icon: '/static/login/role-teacher.svg', desc: '录课时、看学员' },
+  { value: 'parent', label: '家长', icon: '/static/login/role-parent.svg', desc: '查看孩子课时与照片' }
 ]
 let loginSeq = 0
-const loginTypeLabel = computed(() => loginRoles.find((item) => item.value === loginType.value)?.label || '')
-const currentRoleDesc = computed(() => loginRoles.find((item) => item.value === loginType.value)?.desc || '')
 
-function onNeedRole() {
-  uni.showToast({ title: '请先选择登录身份', icon: 'none' })
+/** 同一手机号多身份：后端返回的待选项与一次性凭证 */
+const showRoleChoice = ref(false)
+const roleChoices = ref([])
+const choiceTicket = ref('')
+const choosingRole = ref(false)
+const lastRole = ref('')
+
+function readLastRole() {
+  try {
+    const last = uni.getStorageSync(LAST_ROLE_KEY)
+    if (last && loginRoles.some((r) => r.value === last)) lastRole.value = last
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function rememberRole(role) {
+  if (!role) return
+  lastRole.value = role
+  try {
+    uni.setStorageSync(LAST_ROLE_KEY, role)
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** 登录响应里的 role 转成 admin/teacher/parent，用于记住上次身份 */
+function loginTypeOfRole(role) {
+  if (role === 'teacher' || role === 'parent') return role
+  return 'admin'
+}
+
+function openRoleChoice(data) {
+  const options = Array.isArray(data.roleOptions) ? data.roleOptions : []
+  roleChoices.value = options
+    .map((opt) => {
+      const meta = loginRoles.find((r) => r.value === opt.value)
+      return meta ? { ...meta, label: opt.label || meta.label } : null
+    })
+    .filter(Boolean)
+  choiceTicket.value = data.choiceTicket || ''
+  showRoleChoice.value = roleChoices.value.length > 0
+}
+
+function cancelRoleChoice() {
+  if (choosingRole.value) return
+  showRoleChoice.value = false
+  choiceTicket.value = ''
+}
+
+async function selectRole(type) {
+  if (choosingRole.value || !choiceTicket.value) return
+  choosingRole.value = true
+  try {
+    const data = await authAPI.selectMiniProgramRole({
+      choiceTicket: choiceTicket.value,
+      loginType: type
+    })
+    showRoleChoice.value = false
+    choiceTicket.value = ''
+    finishLogin(data, type)
+  } catch (err) {
+    uni.showToast({ title: err.message || '登录失败', icon: 'none', duration: 2500 })
+  } finally {
+    choosingRole.value = false
+  }
+}
+
+function finishLogin(data, type) {
+  setSkipSilentWechatLogin(false)
+  userStore.applyLogin(data)
+  rememberRole(type || loginTypeOfRole(data.role))
+  uni.showToast({ title: `已登录 ${data.realName || ''}`, icon: 'none', duration: 2000 })
+  setTimeout(() => navigateAfterLogin(data.role), 400)
 }
 const icpNumber = ICP_NUMBER
 // #ifdef MP-WEIXIN
@@ -248,6 +314,10 @@ const privacyLinkTitle = computed(() => {
 
 function toggleAgree() {
   agreedToTerms.value = !agreedToTerms.value
+  // 已同意且未主动退出时，尝试已绑定账号的静默登录
+  if (agreedToTerms.value && !shouldSkipSilent()) {
+    trySilentWechatLogin()
+  }
 }
 
 function ensureAgreed() {
@@ -356,30 +426,9 @@ onMounted(() => {
     /* ignore */
   }
   setupPrivacyAuth()
-  // 记住上次选择的身份，打开即可直接点登录
-  try {
-    const last = uni.getStorageSync(LAST_ROLE_KEY)
-    if (last && loginRoles.some((r) => r.value === last)) chooseLoginType(last)
-  } catch (e) {
-    /* ignore */
-  }
+  readLastRole()
   // #endif
 })
-
-function chooseLoginType(type) {
-  if (loginType.value === type) return
-  loginSeq += 1
-  loginType.value = type
-  loginError.value = ''
-  try {
-    uni.setStorageSync(LAST_ROLE_KEY, type)
-  } catch (e) {
-    /* ignore */
-  }
-  if (type !== 'parent' && !shouldSkipSilent() && agreedToTerms.value) {
-    trySilentWechatLogin()
-  }
-}
 
 function wxLoginCode() {
   return new Promise((resolve, reject) => {
@@ -387,9 +436,9 @@ function wxLoginCode() {
       provider: 'weixin',
       success: (res) => {
         if (res.code) resolve(res.code)
-        else reject(new Error('微信登录失败'))
+        else reject(new Error('登录失败'))
       },
-      fail: () => reject(new Error('微信登录失败'))
+      fail: () => reject(new Error('登录失败'))
     })
   })
 }
@@ -400,12 +449,19 @@ async function trySilentWechatLogin() {
   try {
     const loginCode = await wxLoginCode()
     if (seq !== loginSeq) return
-    const data = await authAPI.wechatMiniProgramLogin({ loginCode, loginType: loginType.value })
+    // 记住了上次身份就直接按该身份静默登录；家长无绑定，不走静默
+    const hint = lastRole.value === 'admin' || lastRole.value === 'teacher' ? lastRole.value : undefined
+    const data = await authAPI.wechatMiniProgramLogin({ loginCode, loginType: hint })
     if (seq !== loginSeq) return
+    if (data?.needRoleChoice) {
+      openRoleChoice(data)
+      return
+    }
     userStore.applyLogin(data)
+    rememberRole(loginTypeOfRole(data.role))
     navigateAfterLogin(data.role)
   } catch {
-    /* 未绑定或需授权手机号，留在登录页点按钮 */
+    /* 未绑定，留在登录页点按钮 */
   }
 }
 
@@ -475,7 +531,7 @@ function promptPrivacyPopup() {
 function phoneAuthFailToast(detail) {
   console.warn('[login] getPhoneNumber', detail)
   if (isDevtools.value) {
-    uni.showToast({ title: '请用「预览」扫码，在手机微信中登录', icon: 'none', duration: 3000 })
+    uni.showToast({ title: '请用「预览」扫码，在真机上登录', icon: 'none', duration: 3000 })
     return
   }
   const errMsg = detail.errMsg || ''
@@ -505,7 +561,7 @@ function phoneAuthFailToast(detail) {
     return
   }
   if (errLower.includes('deny') || errLower.includes('cancel')) {
-    uni.showToast({ title: '已取消授权', icon: 'none' })
+    uni.showToast({ title: '已取消', icon: 'none' })
     return
   }
   const hint = errMsg.replace(/^getPhoneNumber:fail\s*/i, '').trim()
@@ -523,7 +579,7 @@ async function onGetPhoneNumber(e) {
   loginError.value = ''
   const detail = parseGetPhoneDetail(e)
   if (detail.errMsg !== 'getPhoneNumber:ok' || !detail.code) {
-    const failText = detail.errMsg || '没有拿到手机号授权'
+    const failText = detail.errMsg || '未获取到手机号'
     loginError.value = failText
     // #ifdef MP-WEIXIN
     phoneAuthFailToast(detail)
@@ -533,16 +589,17 @@ async function onGetPhoneNumber(e) {
   loading.value = true
   try {
     const loginCode = await wxLoginCode()
+    // 不传 loginType：由后端按手机号自动匹配身份，多身份时返回待选列表
     const data = await authAPI.wechatMiniProgramLogin({
       loginCode,
-      phoneCode: detail.code,
-      loginType: loginType.value
+      phoneCode: detail.code
     })
     if (seq !== loginSeq) return
-    setSkipSilentWechatLogin(false)
-    userStore.applyLogin(data)
-    uni.showToast({ title: `已登录 ${data.realName || ''}`, icon: 'none', duration: 2000 })
-    setTimeout(() => navigateAfterLogin(data.role), 400)
+    if (data?.needRoleChoice) {
+      openRoleChoice(data)
+      return
+    }
+    finishLogin(data)
   } catch (err) {
     loginError.value = err.message || '登录失败'
   } finally {
@@ -628,8 +685,6 @@ $orange: #f37021;
 }
 
 .hero-bubble--a { width: 420rpx; height: 420rpx; top: -150rpx; right: -130rpx; background: rgba(255, 154, 61, 0.22); }
-.hero-bubble--b { width: 240rpx; height: 240rpx; top: 260rpx; left: -110rpx; background: rgba(58, 36, 24, 0.06); }
-.hero-bubble--c { width: 110rpx; height: 110rpx; top: 150rpx; right: 110rpx; background: rgba(243, 112, 33, 0.16); }
 
 .login-brand {
   position: relative;
@@ -676,7 +731,7 @@ $orange: #f37021;
 }
 
 .login-form {
-  padding: 44rpx 32rpx 36rpx;
+  padding: 56rpx 36rpx 40rpx;
   background: #fff;
   border-radius: 44rpx;
   box-shadow: 0 24rpx 64rpx rgba(150, 70, 10, 0.12);
@@ -692,108 +747,102 @@ $orange: #f37021;
 
 .form-desc {
   display: block;
-  margin: 10rpx 0 32rpx;
+  margin: 10rpx 0 40rpx;
   text-align: center;
   font-size: 24rpx;
   line-height: 1.5;
   color: $muted;
 }
 
-.role-list {
+/* 多身份选择 */
+.role-sheet {
+  width: 100%;
+  max-width: 620rpx;
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 44rpx 32rpx 28rpx;
+}
+
+.role-sheet__title {
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.role-sheet__sub {
+  display: block;
+  margin-bottom: 28rpx;
+  text-align: center;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: $muted;
+}
+
+.role-option {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.role-card {
-  position: relative;
-  flex: 1;
-  width: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 28rpx 8rpx 24rpx;
-  margin-left: 16rpx;
+  margin-bottom: 16rpx;
+  padding: 24rpx 24rpx;
+  background: #faf6f1;
   border-radius: 28rpx;
-  background: #f8f4ef;
-  border: 3rpx solid transparent;
-  transition: all 0.2s ease;
-
-  &:first-child {
-    margin-left: 0;
-  }
+  border: 2rpx solid transparent;
 }
 
-.role-card__icon {
-  width: 88rpx;
-  height: 88rpx;
+.role-option--hover { background: #fff3ea; border-color: #f9c9a3; }
+.role-option--busy { opacity: 0.6; }
+
+.role-option__icon {
   flex-shrink: 0;
+  width: 84rpx;
+  height: 84rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 28rpx;
+  border-radius: 24rpx;
   background: #fff;
   overflow: hidden;
-  transition: transform 0.2s ease;
-  box-sizing: border-box;
 }
 
-.role-card__name {
+.role-option__main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 22rpx;
+}
+
+.role-option__name {
   display: block;
-  margin-top: 16rpx;
-  font-size: 28rpx;
+  font-size: 31rpx;
   font-weight: 700;
-  color: $muted;
-  text-align: center;
-  white-space: nowrap;
+  color: $ink;
 }
 
-.role-card__check {
-  position: absolute;
-  top: 10rpx;
-  right: 10rpx;
-  width: 34rpx;
-  height: 34rpx;
-  line-height: 34rpx;
-  text-align: center;
-  font-size: 20rpx;
-  font-weight: 800;
-  color: #fff;
-  border-radius: 50%;
-}
-
-.role-card.active { transform: translateY(-4rpx); }
-.role-card.active .role-card__icon { transform: scale(1.06); }
-.role-card.active .role-card__name { color: $ink; }
-
-.role-card--teacher.active { background: #fff3ea; border-color: #f37021; }
-.role-card--teacher .role-card__check { background: #f37021; }
-.role-card--admin.active { background: #fff3ea; border-color: #f37021; }
-.role-card--admin .role-card__check { background: #f37021; }
-.role-card--parent.active { background: #fff3ea; border-color: #f37021; }
-.role-card--parent .role-card__check { background: #f37021; }
-
-.role-hint {
-  margin: 22rpx 0 26rpx;
-  padding: 16rpx 20rpx;
-  text-align: center;
+.role-option__desc {
+  display: block;
+  margin-top: 4rpx;
   font-size: 23rpx;
-  line-height: 1.5;
-  color: #b7aea4;
-  background: #faf7f3;
-  border-radius: 18rpx;
+  color: $muted;
 }
 
-.role-hint--on { color: #6b6158; }
+.role-option__tag {
+  flex-shrink: 0;
+  padding: 4rpx 16rpx;
+  font-size: 21rpx;
+  color: $orange;
+  background: rgba(243, 112, 33, 0.1);
+  border-radius: 999rpx;
+}
+
+.role-option__arrow {
+  flex-shrink: 0;
+  font-size: 40rpx;
+  color: #cbbfb3;
+}
 
 .agree-row {
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  margin-bottom: 28rpx;
+  margin-top: 32rpx;
   padding: 4rpx 0;
 }
 
@@ -830,7 +879,7 @@ $orange: #f37021;
   color: $muted;
 }
 
-.btn-wechat {
+.btn-phone-login {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -846,13 +895,10 @@ $orange: #f37021;
   box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.35);
 }
 
-.btn-wechat::after { border: none; }
-.btn-wechat--admin { background: linear-gradient(135deg, #f98a3c, #f37021); box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.3); }
-.btn-wechat--parent { background: linear-gradient(135deg, #f98a3c, #f37021); box-shadow: 0 14rpx 30rpx rgba(243, 112, 33, 0.3); }
-.btn-wechat--idle { background: #e9e2d9; color: #a39a90; box-shadow: none; }
-.btn-wechat[disabled] { opacity: 0.7; }
+.btn-phone-login::after { border: none; }
+.btn-phone-login[disabled] { opacity: 0.7; }
 
-.btn-wechat__icon {
+.btn-phone-login__icon {
   font-size: 34rpx;
   line-height: 1;
 }

@@ -8,6 +8,9 @@
   "mp-weixin": {
     "appid": "wx990725d3b911a978",
     "__usePrivacyCheck__": true,
+    "requiredPrivateInfos": [
+      "chooseImage"
+    ],
     "permission": {
       "scope.camera": {
         "desc": "用于拍摄课堂照片并上传至课时记录"

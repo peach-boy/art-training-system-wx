@@ -5,7 +5,7 @@
     <view class="hero">
       <view class="hero-text">
         <text class="hero-hi">你好，家长</text>
-        <text class="hero-sub">已通过微信手机号关联以下学员</text>
+        <text class="hero-sub">已通过手机号关联以下学员</text>
       </view>
       <view class="hero-badge">家长</view>
     </view>
@@ -13,7 +13,7 @@
     <view v-if="loading" class="empty">加载中…</view>
     <view v-else-if="!children.length" class="empty">
       <text class="empty-title">没有找到关联学员</text>
-      <text class="empty-desc">请确认学员档案里的联系电话是当前微信绑定的手机号</text>
+      <text class="empty-desc">请确认学员档案里的联系电话与当前绑定的手机号一致</text>
     </view>
     <view v-else class="list">
       <view v-for="item in children" :key="item.studentId" class="child">

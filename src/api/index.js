@@ -11,6 +11,10 @@ export const authAPI = {
   wechatMiniProgramLogin(data) {
     return request({ url: '/auth/wechat/miniprogram/login', method: 'POST', data })
   },
+  /** 同一手机号多身份时，选定身份后换取登录态 */
+  selectMiniProgramRole(data) {
+    return request({ url: '/auth/wechat/miniprogram/select-role', method: 'POST', data })
+  },
   getCurrentUser() {
     return request({ url: '/auth/current', method: 'GET' })
   },

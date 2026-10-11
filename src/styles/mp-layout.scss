@@ -2,6 +2,7 @@
  * 微信小程序布局兜底：
  * - 装饰性 SVG 请用 AppIcon 组件
  * - flex 内标题用 .mp-t 块级展示
+ * - 扫码直进的独立流程页用 mp-ui.scss 中的 .mp-flow-* / .mp-btn（写入 app.wxss）
  */
 .mp-t {
   display: block;

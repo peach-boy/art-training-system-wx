@@ -559,8 +559,22 @@ function showImageSourceSheet() {
   })
 }
 
+function syncPrivacyContractName() {
+  // #ifdef MP-WEIXIN
+  if (typeof wx === 'undefined' || !wx.getPrivacySetting) return
+  wx.getPrivacySetting({
+    success: (res) => {
+      if (res.privacyContractName) {
+        privacyContractName.value = res.privacyContractName
+      }
+    }
+  })
+  // #endif
+}
+
 function setupPhotoPrivacy() {
   // #ifdef MP-WEIXIN
+  syncPrivacyContractName()
   if (typeof wx === 'undefined') return
   if (wx.onNeedPrivacyAuthorization) {
     wx.onNeedPrivacyAuthorization((resolve) => {
@@ -593,8 +607,10 @@ function handlePickFail(err) {
   if (/112|scope is not declared/i.test(msg)) {
     uni.showModal({
       title: '公众平台未声明相册/摄像头',
-      content: '请到微信公众平台的用户隐私保护指引里勾选「选中的照片或视频」和「摄像头」，审核通过后再试。仅在小程序里点同意无法代替这一项。',
-      showCancel: false
+      content:
+        '请到微信公众平台 → 设置 → 用户隐私保护指引中勾选「收集你选中的照片或视频信息」和「访问你的摄像头」，审核通过后再试；预览版还需在「版本管理 → 提交审核」里同步开发版隐私指引。详见项目 docs/WECHAT-PRIVACY-ALBUM-CAMERA.md。仅在小程序里点同意无法代替这一项。',
+      showCancel: false,
+      confirmText: '我知道了'
     })
     return
   }
@@ -605,7 +621,7 @@ function handlePickFail(err) {
   if (/auth deny|authorize|permission/i.test(msg)) {
     uni.showModal({
       title: '需要相机或相册权限',
-      content: '请在手机系统设置中允许微信使用相机和相册，再回到小程序重试。',
+      content: '请在手机系统设置中允许相机和相册权限，再回到小程序重试。',
       showCancel: false
     })
     return
@@ -629,7 +645,17 @@ function openImagePicker(source) {
 
 function pickImage(source) {
   if (uploadingImage.value) return
-  openImagePicker(source)
+  const run = () => openImagePicker(source)
+  // #ifdef MP-WEIXIN
+  if (typeof wx !== 'undefined' && wx.requirePrivacyAuthorize) {
+    wx.requirePrivacyAuthorize({
+      success: run,
+      fail: (err) => handlePickFail(err || { errMsg: 'requirePrivacyAuthorize:fail' })
+    })
+    return
+  }
+  // #endif
+  run()
 }
 
 async function compressAndUpload(filePath) {

@@ -59,7 +59,7 @@ function onLogout() {
     content: '确定退出当前账号？',
     success: async (res) => {
       if (!res.confirm) return
-      // 主动退出后，登录页不再静默登录，需点「微信手机号登录」才会重新进入
+      // 主动退出后，登录页不再静默登录，需点「手机号快捷登录」才会重新进入
       setSkipSilentWechatLogin(true)
       await userStore.logout()
       uni.reLaunch({ url: '/pages/login/login?loggedOut=1' })

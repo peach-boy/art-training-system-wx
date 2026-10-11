@@ -30,7 +30,9 @@
     {
       "path": "pages/pc-confirm/index",
       "style": {
-        "navigationBarTitleText": "确认电脑登录"
+        "navigationBarTitleText": "确认电脑登录",
+        "navigationBarBackgroundColor": "#ffffff",
+        "backgroundColor": "#f7f0e6"
       }
     },
     {

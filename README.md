@@ -74,7 +74,8 @@ npm run dev:mp-weixin   # 微信开发者工具打开 dist/dev/mp-weixin（见�
 - 后端需配置环境变量 `WECHAT_MINIAPP_SECRET`（公众平台 → 开发管理 → AppSecret），并执行 `docs/migrate_wechat_miniprogram_login.sql`。
 - 腾讯云 CVM + Docker：在服务器执行 `sudo bash scripts/setup-docker-env.sh`（见后端仓库 `art-training-system-backend/scripts/setup-docker-env.sh`）。
 - 微信公众平台需开通 **手机号快速验证**（企业主体小程序；个人主体可能无法使用 getPhoneNumber）。
-- **隐私与手机号（必配，否则 errno:112）**：见下方「errno 112 排查」。`manifest.json` 仅保留 `__usePrivacyCheck__`（**不要**在 `requiredPrivateInfos` 里写 `getPhoneNumber`）。
+- **隐私与手机号（必配，否则 errno:112）**：见下方「errno 112 排查」。`manifest.json` 保留 `__usePrivacyCheck__`（**不要**在 `requiredPrivateInfos` 里写 `getPhoneNumber`）；选图已声明 `chooseImage`。
+- **隐私与相册/拍照（录入课时）**：须在公众平台勾选 **选中的照片或视频** + **摄像头**，见 **[docs/WECHAT-PRIVACY-ALBUM-CAMERA.md](docs/WECHAT-PRIVACY-ALBUM-CAMERA.md)**。
 
 ### errno 112：`api scope is not declared in the privacy agreement`
 
