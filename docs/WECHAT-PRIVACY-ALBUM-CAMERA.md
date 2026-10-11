@@ -35,7 +35,7 @@
 
 1. **隐私指引未审核通过** — 通过后等待约 30 分钟～1 小时再测。  
 2. **只改了设置页，预览版未同步** — **管理** → **版本管理** → **提交审核**，在提审流程里按提示更新**开发版**隐私指引并勾选 Album、Camera。  
-3. **上传的代码未包含选图接口** — 本项目已在 `manifest.json` 的 `requiredPrivateInfos` 中声明 `chooseImage`，上传新版本后后台「必填项」才会出现对应类型。  
+3. **上传的代码未包含选图接口** — 无需在 `manifest.json` 声明（`requiredPrivateInfos` 只支持 `getLocation`、`chooseAddress` 等位置/地址类接口，写 `chooseImage` 会导致预览报错）。微信会根据代码里实际调用 `wx.chooseImage` 自动在后台列出「选中的照片或视频」必填项。  
 4. **AppID 不一致** — 须为 `wx990725d3b911a978`（与 `src/manifest.json` 一致）。  
 5. **本地缓存** — 删除小程序 → 重新预览/打开；开发者工具清授权。
 
