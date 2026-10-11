@@ -604,11 +604,13 @@ function onPrivacyDisagree() {
 function handlePickFail(err) {
   const msg = err?.errMsg || ''
   if (/cancel/i.test(msg)) return
-  if (/112|scope is not declared/i.test(msg)) {
+  console.warn('[attendance/form] choose image fail', err)
+  if (err?.errno === 112 || /scope is not declared/i.test(msg)) {
     uni.showModal({
-      title: '公众平台未声明选择照片',
+      title: '暂时无法选择照片',
       content:
-        '请到微信公众平台 → 设置 → 用户隐私保护指引中勾选「收集你选中的照片或视频信息」，审核通过后再试；预览版还需在「版本管理 → 提交审核」里同步开发版隐私指引。详见项目 docs/WECHAT-PRIVACY-ALBUM-CAMERA.md。仅在小程序里点同意无法代替这一项。',
+        '当前版本的隐私保护指引还未生效（未审核通过，或未包含「选中的照片或视频」）。请管理员在公众平台提交并通过隐私指引审核后，删除小程序重新进入再试。' +
+        (msg ? `\n\n${msg}` : ''),
       showCancel: false,
       confirmText: '我知道了'
     })
