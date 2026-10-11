@@ -173,6 +173,7 @@ import { requireLogin, useUserStore } from '@/stores/user'
 import { studentAPI, coursePackageAPI, careAPI, teacherAPI } from '@/api'
 import { isAllStores } from '@/utils/finance'
 import { formatClassHours, formatRemainingClasses } from '@/utils/classHours'
+import { filterCareEveningTeachers } from '@/utils/careEveningTeachers'
 
 const CARE_TAG = '晚托'
 const DEDUCT_CHOICES = [
@@ -223,7 +224,7 @@ function teacherIdFromKey(key) {
 
 async function loadTeachers() {
   try {
-    teacherOptions.value = (await teacherAPI.getList()) || []
+    teacherOptions.value = filterCareEveningTeachers((await teacherAPI.getList()) || [])
   } catch {
     teacherOptions.value = []
   }

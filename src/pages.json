@@ -114,6 +114,14 @@
       }
     },
     {
+      "path": "pages/salary/my",
+      "style": {
+        "navigationBarTitleText": "我的工资",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/finance/cost-list",
       "style": {
         "navigationBarTitleText": "成本管理"

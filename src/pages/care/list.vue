@@ -101,6 +101,7 @@ import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
 import { careAPI, teacherAPI } from '@/api'
 import { formatClassHours } from '@/utils/classHours'
+import { filterCareEveningTeachers } from '@/utils/careEveningTeachers'
 import {
   PERIOD_MODES,
   todayStr,
@@ -142,7 +143,7 @@ const teacherFilterLabel = computed(() => {
 
 async function loadTeachers() {
   try {
-    teacherOptions.value = (await teacherAPI.getList()) || []
+    teacherOptions.value = filterCareEveningTeachers((await teacherAPI.getList()) || [])
   } catch {
     teacherOptions.value = []
   }
