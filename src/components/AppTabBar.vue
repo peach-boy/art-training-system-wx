@@ -37,7 +37,6 @@ const userStore = useUserStore()
 const teacherTabs = [
   { key: 'home', label: '首页', icon: 'home', path: '/pages/home/index' },
   { key: 'attendance', label: '课时', icon: 'attendance', path: '/pages/attendance/list' },
-  { key: 'analysis', label: '分析', icon: 'analysis', path: '/pages/analysis/index' },
   { key: 'profile', label: '我的', icon: 'profile', path: '/pages/profile/index' }
 ]
 

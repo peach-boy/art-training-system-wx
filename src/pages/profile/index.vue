@@ -8,15 +8,6 @@
     </view>
 
     <view class="menu">
-      <view
-        v-if="userStore.isTeacher"
-        class="menu-item"
-        hover-class="menu-item--hover"
-        @tap="goMySalary"
-      >
-        <text class="menu-title">我的工资</text>
-        <text class="menu-arrow">›</text>
-      </view>
       <view class="menu-item" hover-class="menu-item--hover" @tap="goHome">
         <text class="menu-title">{{ userStore.role === 'parent' ? '我的孩子' : '返回首页' }}</text>
         <text class="menu-arrow">›</text>
@@ -60,10 +51,6 @@ onShow(() => {
 
 function goHome() {
   uni.reLaunch({ url: userStore.role === 'parent' ? '/pages/parent/home' : '/pages/home/index' })
-}
-
-function goMySalary() {
-  uni.navigateTo({ url: '/pages/salary/my' })
 }
 
 function onLogout() {

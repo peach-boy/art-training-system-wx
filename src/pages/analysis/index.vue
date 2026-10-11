@@ -58,7 +58,7 @@
           <text class="sum-val">{{ bucket.classes }}</text>
           <text class="sum-label">课时数</text>
         </view>
-        <view class="sum-cell sum-cell--money">
+        <view v-if="userStore.isAdmin" class="sum-cell sum-cell--money">
           <text class="sum-val">{{ bucket.income }}</text>
           <text class="sum-label">金额</text>
         </view>
@@ -354,6 +354,10 @@ onShow(() => {
   if (!requireLogin()) return
   if (userStore.role === 'parent') {
     uni.reLaunch({ url: '/pages/parent/home' })
+    return
+  }
+  if (userStore.isTeacher) {
+    uni.reLaunch({ url: '/pages/home/index' })
     return
   }
   loadAll()

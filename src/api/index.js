@@ -215,20 +215,6 @@ export const teacherAPI = {
   }
 }
 
-export const teacherSalaryAPI = {
-  getMyTrend(params) {
-    return request({
-      url: '/teacher-salary/my-trend',
-      method: 'GET',
-      params: {
-        year: params.year,
-        month: params.month,
-        months: params.months ?? 6
-      }
-    })
-  }
-}
-
 export const financialEntryAPI = {
   list(year, month, type) {
     return request({
