@@ -115,6 +115,8 @@ export const careAPI = {
         studentId: params.studentId,
         startDate: params.startDate,
         endDate: params.endDate,
+        teacherId: params.teacherId,
+        teacherUnassigned: params.teacherUnassigned,
         sortBy: params.sortBy || 'classDate'
       }
     })

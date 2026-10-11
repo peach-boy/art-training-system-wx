@@ -18,6 +18,18 @@
         <text class="date-today" @tap="setToday">今天</text>
         <text class="date-count">共 {{ sessions.length }} 位 · 已扣 {{ attendedCount }}</text>
       </view>
+      <picker
+        class="teacher-bar"
+        :range="teacherPickerRange"
+        range-key="label"
+        @change="onSessionTeacherPick"
+      >
+        <view class="teacher-bar-inner">
+          <text class="teacher-bar-label">授课老师</text>
+          <text class="teacher-bar-value">{{ sessionTeacherLabel }}</text>
+          <text class="teacher-bar-arrow">▾</text>
+        </view>
+      </picker>
 
       <view v-if="sessionLoading && !sessions.length" class="empty">加载中…</view>
       <view v-else-if="!sessions.length" class="empty">
@@ -109,6 +121,20 @@
           </view>
         </picker>
 
+        <picker
+          :range="teacherPickerRange"
+          range-key="label"
+          @change="onFormTeacherPick"
+        >
+          <view class="row">
+            <text class="row-label">授课老师</text>
+            <text class="row-value" :class="{ 'row-value--empty': !formTeacherLabel }">
+              {{ formTeacherLabel || '选填' }}
+            </text>
+            <text class="row-arrow">›</text>
+          </view>
+        </picker>
+
         <view class="row row--chips">
           <text class="row-label">扣除课时</text>
           <view class="chips">
@@ -144,7 +170,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import KindTabs from '@/components/KindTabs.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
-import { studentAPI, coursePackageAPI, careAPI } from '@/api'
+import { studentAPI, coursePackageAPI, careAPI, teacherAPI } from '@/api'
 import { isAllStores } from '@/utils/finance'
 import { formatClassHours, formatRemainingClasses } from '@/utils/classHours'
 
@@ -170,6 +196,48 @@ const sessionDate = ref(today)
 const sessions = ref([])
 const sessionLoading = ref(false)
 const deductingId = ref(null)
+const teacherOptions = ref([])
+const sessionTeacherKey = ref('none')
+const formTeacherKey = ref('none')
+
+const teacherPickerRange = computed(() => [
+  { key: 'none', label: '未指定' },
+  ...teacherOptions.value.map((t) => ({ key: String(t.teacherId), label: t.name }))
+])
+
+const sessionTeacherLabel = computed(() => {
+  const hit = teacherPickerRange.value.find((o) => o.key === sessionTeacherKey.value)
+  return hit?.label || '未指定'
+})
+
+const formTeacherLabel = computed(() => {
+  const hit = teacherPickerRange.value.find((o) => o.key === formTeacherKey.value)
+  return hit?.label || ''
+})
+
+function teacherIdFromKey(key) {
+  if (!key || key === 'none') return undefined
+  const n = Number(key)
+  return Number.isNaN(n) ? undefined : n
+}
+
+async function loadTeachers() {
+  try {
+    teacherOptions.value = (await teacherAPI.getList()) || []
+  } catch {
+    teacherOptions.value = []
+  }
+}
+
+function onSessionTeacherPick(e) {
+  const opt = teacherPickerRange.value[Number(e.detail.value)]
+  if (opt) sessionTeacherKey.value = opt.key
+}
+
+function onFormTeacherPick(e) {
+  const opt = teacherPickerRange.value[Number(e.detail.value)]
+  if (opt) formTeacherKey.value = opt.key
+}
 
 const attendedCount = computed(() => sessions.value.filter((s) => s.attended).length)
 
@@ -218,7 +286,8 @@ function deductSession(s) {
         await careAPI.deduct({
           studentId: s.studentId,
           sessionDate: sessionDate.value,
-          packageId: s.packageId || undefined
+          packageId: s.packageId || undefined,
+          teacherId: teacherIdFromKey(sessionTeacherKey.value)
         })
         uni.showToast({ title: '扣课成功', icon: 'success' })
         await loadSessions()
@@ -341,7 +410,8 @@ async function handleSubmit() {
       studentId: studentId.value,
       sessionDate: formDate.value,
       packageId: packageId.value,
-      classesDeducted: classesDeducted.value
+      classesDeducted: classesDeducted.value,
+      teacherId: teacherIdFromKey(formTeacherKey.value)
     })
     uni.showToast({ title: '晚托课时录入成功', icon: 'success' })
     setTimeout(() => uni.reLaunch({ url: '/pages/care/list' }), 600)
@@ -358,6 +428,7 @@ onShow(() => {
     uni.reLaunch({ url: '/pages/home/index' })
     return
   }
+  loadTeachers()
   loadSessions()
   searchStudents()
 })
@@ -409,6 +480,37 @@ $care: #5b3a29;
   align-items: center;
   gap: 16rpx;
   margin-bottom: 16rpx;
+}
+
+.teacher-bar {
+  margin-bottom: 16rpx;
+}
+
+.teacher-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 18rpx 24rpx;
+  background: #fff;
+  border-radius: 22rpx;
+  box-shadow: 0 4rpx 14rpx rgba(42, 36, 31, 0.05);
+}
+
+.teacher-bar-label {
+  font-size: 26rpx;
+  color: $muted;
+}
+
+.teacher-bar-value {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $ink;
+}
+
+.teacher-bar-arrow {
+  font-size: 22rpx;
+  color: $muted;
 }
 
 .date-pill {

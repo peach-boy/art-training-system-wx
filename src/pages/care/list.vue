@@ -40,6 +40,19 @@
         <view class="nav-arrow" hover-class="nav-arrow--hover" @tap="shiftPeriod(1)">›</view>
       </view>
 
+      <picker
+        class="teacher-filter"
+        :range="teacherPickerRange"
+        range-key="label"
+        @change="onTeacherFilterPick"
+      >
+        <view class="teacher-filter-inner">
+          <text class="teacher-filter-label">授课老师</text>
+          <text class="teacher-filter-value">{{ teacherFilterLabel }}</text>
+          <text class="teacher-filter-arrow">▾</text>
+        </view>
+      </picker>
+
       <view class="date-foot">
         <text class="date-count">
           <text v-if="loading && !list.length">查询中…</text>
@@ -65,6 +78,8 @@
               <text v-if="item.studentGrade" class="rec-grade">{{ item.studentGrade }}</text>
             </view>
             <text v-if="item.packageName" class="rec-meta">{{ item.packageName }}</text>
+            <text v-if="item.teacherName" class="rec-meta">老师：{{ item.teacherName }}</text>
+            <text v-else class="rec-meta rec-meta--muted">老师：未指定</text>
             <text v-if="item.notes" class="rec-meta">备注：{{ item.notes }}</text>
           </view>
           <text class="rec-deduct">-{{ formatClassHours(item.classesDeducted) }}</text>
@@ -84,7 +99,7 @@ import KindTabs from '@/components/KindTabs.vue'
 import StoreSwitcher from '@/components/StoreSwitcher.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { useStoreRefresh } from '@/composables/useStoreRefresh'
-import { careAPI } from '@/api'
+import { careAPI, teacherAPI } from '@/api'
 import { formatClassHours } from '@/utils/classHours'
 import {
   PERIOD_MODES,
@@ -111,6 +126,44 @@ const endDate = ref('')
 const periodMode = ref('day')
 const anchorDate = ref(todayStr())
 const monthValue = ref(currentMonthStr())
+const teacherOptions = ref([])
+const teacherFilterKey = ref('all')
+
+const teacherPickerRange = computed(() => [
+  { key: 'all', label: '全部老师' },
+  { key: 'unassigned', label: '未指定老师' },
+  ...teacherOptions.value.map((t) => ({ key: String(t.teacherId), label: t.name }))
+])
+
+const teacherFilterLabel = computed(() => {
+  const hit = teacherPickerRange.value.find((o) => o.key === teacherFilterKey.value)
+  return hit?.label || '全部老师'
+})
+
+async function loadTeachers() {
+  try {
+    teacherOptions.value = (await teacherAPI.getList()) || []
+  } catch {
+    teacherOptions.value = []
+  }
+}
+
+function onTeacherFilterPick(e) {
+  const opt = teacherPickerRange.value[Number(e.detail.value)]
+  if (!opt) return
+  teacherFilterKey.value = opt.key
+  reload()
+}
+
+function teacherQueryParams() {
+  if (teacherFilterKey.value === 'unassigned') {
+    return { teacherUnassigned: true }
+  }
+  if (teacherFilterKey.value !== 'all') {
+    return { teacherId: Number(teacherFilterKey.value) }
+  }
+  return {}
+}
 
 function weekdayOf(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -176,7 +229,8 @@ async function fetchPage(page, append) {
     size: PAGE_SIZE,
     sortBy: 'classDate',
     startDate: startDate.value,
-    endDate: endDate.value
+    endDate: endDate.value,
+    ...teacherQueryParams()
   })
   const records = data?.records || data?.content || []
   total.value = Number(data?.total ?? data?.totalElements ?? 0)
@@ -256,6 +310,7 @@ onShow(() => {
     uni.reLaunch({ url: '/pages/home/index' })
     return
   }
+  loadTeachers()
   reload()
 })
 
@@ -350,6 +405,40 @@ $care: #5b3a29;
 .date-sub {
   font-size: 22rpx;
   color: $muted;
+}
+
+.teacher-filter {
+  margin-top: 16rpx;
+}
+
+.teacher-filter-inner {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: #faf7f3;
+  border-radius: 18rpx;
+}
+
+.teacher-filter-label {
+  font-size: 24rpx;
+  color: $muted;
+}
+
+.teacher-filter-value {
+  flex: 1;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: $ink;
+}
+
+.teacher-filter-arrow {
+  font-size: 22rpx;
+  color: $muted;
+}
+
+.rec-meta--muted {
+  color: #b7aea4;
 }
 
 .date-foot {

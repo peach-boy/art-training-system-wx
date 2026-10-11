@@ -40,8 +40,20 @@
           <text>{{ loginType ? currentRoleDesc : '不同身份匹配不同的账号资料，请选对哦' }}</text>
         </view>
 
+        <view class="agree-row">
+          <view class="agree-check" :class="{ 'agree-check--on': agreedToTerms }" @tap="toggleAgree">
+            <text v-if="agreedToTerms" class="agree-check__icon">✓</text>
+          </view>
+          <view class="agree-text">
+            <text @tap="toggleAgree">我已阅读并同意</text>
+            <text class="login-tip-link" @tap.stop="openUserAgreement">《用户服务协议》</text>
+            <text @tap="toggleAgree">和</text>
+            <text class="login-tip-link" @tap.stop="openPrivacyContract">《{{ privacyLinkTitle }}》</text>
+          </view>
+        </view>
+
         <button
-          v-if="loginType"
+          v-if="loginType && agreedToTerms"
           class="btn-wechat"
           :class="'btn-wechat--' + loginType"
           :loading="loading"
@@ -51,16 +63,20 @@
         >
           <text>{{ loading ? '登录中…' : '微信授权，以' + loginTypeLabel + '登录' }}</text>
         </button>
+        <button
+          v-else-if="loginType"
+          class="btn-wechat"
+          :class="'btn-wechat--' + loginType"
+          @tap="onLoginNeedAgree"
+        >
+          <text>微信授权，以{{ loginTypeLabel }}登录</text>
+        </button>
         <button v-else class="btn-wechat btn-wechat--idle" @tap="onNeedRole">
           <text>请先选择身份</text>
         </button>
         <text v-if="loginError" class="login-error">{{ loginError }}</text>
 
         <text v-if="isDevtools" class="login-tip login-tip--warn">模拟器无法完成手机号登录，请点工具栏「预览」扫码，在手机微信中操作。</text>
-        <text v-if="privacyContractName" class="login-tip">
-          登录即表示同意
-          <text class="login-tip-link" @tap="openPrivacyContract">{{ privacyContractName }}</text>
-        </text>
         <text class="demo-entry" @tap="openDemoLogin">体验账号登录</text>
       </view>
 
@@ -219,9 +235,36 @@ const isDevtools = ref(false)
 const privacyContractName = ref('')
 const showPrivacy = ref(false)
 const showDemo = ref(false)
+/** 用户主动勾选，默认不同意 */
+const agreedToTerms = ref(false)
 let resolvePrivacyAuthorization = null
 
+const privacyLinkTitle = computed(() => {
+  const name = privacyContractName.value || ''
+  if (name.includes('隐私')) return name.length > 14 ? '隐私保护指引' : name
+  return name || '隐私保护指引'
+})
+
+function toggleAgree() {
+  agreedToTerms.value = !agreedToTerms.value
+}
+
+function ensureAgreed() {
+  if (agreedToTerms.value) return true
+  uni.showToast({ title: '请先阅读并勾选同意协议', icon: 'none' })
+  return false
+}
+
+function onLoginNeedAgree() {
+  ensureAgreed()
+}
+
+function openUserAgreement() {
+  uni.navigateTo({ url: '/pages/legal/user-agreement' })
+}
+
 function openDemoLogin() {
+  if (!ensureAgreed()) return
   loginError.value = ''
   showDemo.value = true
 }
@@ -234,6 +277,7 @@ function closeDemoLogin() {
 /** 体验账号：员工手机号 + 密码（不需要验证码），供小程序审核和演示使用 */
 async function handleDemoLogin() {
   if (loading.value) return
+  if (!ensureAgreed()) return
   const acc = (account.value || '').trim()
   if (!PHONE_PATTERN.test(acc) || !password.value) {
     uni.showToast({ title: '请填写11位手机号和密码', icon: 'none' })
@@ -331,7 +375,7 @@ function chooseLoginType(type) {
   } catch (e) {
     /* ignore */
   }
-  if (type !== 'parent' && !shouldSkipSilent()) {
+  if (type !== 'parent' && !shouldSkipSilent() && agreedToTerms.value) {
     trySilentWechatLogin()
   }
 }
@@ -381,9 +425,6 @@ function syncPrivacyContractName() {
       console.info('[login] getPrivacySetting', res)
       if (res.privacyContractName) {
         privacyContractName.value = res.privacyContractName
-      }
-      if (res.needAuthorization) {
-        showPrivacy.value = true
       }
     }
   })
@@ -730,6 +771,47 @@ $orange: #f37021;
 }
 
 .role-hint--on { color: #6b6158; }
+
+.agree-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 28rpx;
+  padding: 4rpx 0;
+}
+
+.agree-check {
+  flex-shrink: 0;
+  width: 36rpx;
+  height: 36rpx;
+  margin-top: 4rpx;
+  box-sizing: border-box;
+  border: 2rpx solid #cfc6bc;
+  border-radius: 8rpx;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agree-check--on {
+  border-color: #f37021;
+  background: #f37021;
+}
+
+.agree-check__icon {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.agree-text {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.65;
+  color: $muted;
+}
 
 .btn-wechat {
   display: flex;

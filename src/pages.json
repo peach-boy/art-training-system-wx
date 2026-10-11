@@ -22,6 +22,12 @@
       }
     },
     {
+      "path": "pages/legal/user-agreement",
+      "style": {
+        "navigationBarTitleText": "用户服务协议"
+      }
+    },
+    {
       "path": "pages/pc-confirm/index",
       "style": {
         "navigationBarTitleText": "确认电脑登录"
