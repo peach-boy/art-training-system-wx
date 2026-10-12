@@ -1,11 +1,20 @@
 <script setup>
 import { onLaunch } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user'
+import { getToken, getUserInfo } from '@/utils/storage'
 
 onLaunch(() => {
   const userStore = useUserStore()
   if (userStore.isLoggedIn) {
+    const launchToken = getToken()
     userStore.fetchCurrentUser().catch(() => {
+      // 观察员会话过期时，请求层已切回管理员登录态，这里不能再清掉
+      if (getToken() !== launchToken) {
+        userStore.token = getToken()
+        userStore.userInfo = getUserInfo()
+        userStore.observing = false
+        return
+      }
       userStore.clearAuth()
     })
   }

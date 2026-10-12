@@ -7,7 +7,8 @@ $hairline: #e9dfd2;
 $bg-page: #f7f0e6;
 $canvas: #ffffff;
 
-:root {
+/* 小程序里 :root 不生效，CSS 变量必须挂在 page 上；两条规则分开写，避免互相拖累 */
+@mixin theme-vars {
   --primary: #{$primary};
   --primary-light: #{$primary-light};
   --text-ink: #{$ink};
@@ -18,4 +19,12 @@ $canvas: #ffffff;
   --radius-sm: 16rpx;
   --radius-md: 28rpx;
   --radius-full: 9999rpx;
+}
+
+page {
+  @include theme-vars;
+}
+
+:root {
+  @include theme-vars;
 }

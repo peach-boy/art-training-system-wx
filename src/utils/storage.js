@@ -35,6 +35,40 @@ export function clearAuth() {
   uni.removeStorageSync(TOKEN_KEY)
   uni.removeStorageSync(USER_INFO_KEY)
   uni.removeStorageSync(STORE_ID_KEY)
+  uni.removeStorageSync(OBSERVER_BACKUP_KEY)
+}
+
+/** 管理员「观察员」：进入家长视角前，先备份管理员自己的登录态 */
+const OBSERVER_BACKUP_KEY = 'observerBackup'
+
+export function isObserving() {
+  return !!uni.getStorageSync(OBSERVER_BACKUP_KEY)
+}
+
+export function saveObserverBackup(returnUrl) {
+  uni.setStorageSync(OBSERVER_BACKUP_KEY, {
+    token: getToken(),
+    userInfo: getUserInfo(),
+    storeId: getCurrentStoreId(),
+    returnUrl: returnUrl || ''
+  })
+}
+
+/** 退出观察后回到哪个页面（进入观察时所在的学员详情） */
+export function getObserverReturnUrl() {
+  const backup = uni.getStorageSync(OBSERVER_BACKUP_KEY)
+  return (backup && backup.returnUrl) || ''
+}
+
+/** 恢复管理员登录态；没有备份返回 false */
+export function restoreObserverBackup() {
+  const backup = uni.getStorageSync(OBSERVER_BACKUP_KEY)
+  uni.removeStorageSync(OBSERVER_BACKUP_KEY)
+  if (!backup || !backup.token) return false
+  setToken(backup.token)
+  setUserInfo(backup.userInfo)
+  setCurrentStoreId(backup.storeId)
+  return true
 }
 
 /** 用户主动退出后，不要用已绑定的微信 openid 立刻静默登录回去 */

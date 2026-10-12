@@ -11,6 +11,10 @@ export const authAPI = {
   wechatMiniProgramLogin(data) {
     return request({ url: '/auth/wechat/miniprogram/login', method: 'POST', data })
   },
+  /** 管理员观察员：以该学员家长身份进入家长端，返回家长登录态 */
+  observeParent(studentId) {
+    return request({ url: '/auth/observer/parent', method: 'POST', data: { studentId: Number(studentId) } })
+  },
   /** 同一手机号多身份时，选定身份后换取登录态 */
   selectMiniProgramRole(data) {
     return request({ url: '/auth/wechat/miniprogram/select-role', method: 'POST', data })

@@ -7,39 +7,88 @@
     </view>
 
     <view class="seg">
-      <view class="seg-item" :class="{ active: tab === 'package' }" @tap="tab = 'package'">课包记录</view>
-      <view class="seg-item" :class="{ active: tab === 'attendance' }" @tap="tab = 'attendance'">课时记录</view>
+      <view class="seg-item" :class="{ active: tab === 'package' }" @tap="switchTab('package')">课包记录</view>
+      <view class="seg-item" :class="{ active: tab === 'attendance' }" @tap="switchTab('attendance')">课时记录</view>
     </view>
 
     <view v-if="loading" class="empty">加载中…</view>
 
     <template v-else-if="tab === 'package'">
       <view v-if="!packages.length" class="empty">暂无课包</view>
-      <view v-for="pkg in packages" :key="pkg.packageId" class="card">
+      <view
+        v-for="pkg in packages"
+        :key="pkg.packageId"
+        class="card"
+        :class="{ 'card--open': openedPackageId === pkg.packageId }"
+        hover-class="card--hover"
+        @tap="togglePackage(pkg)"
+      >
         <view class="row">
           <text class="name">{{ pkg.packageName || '课包' }}</text>
-          <text class="tag" :class="'tag--' + statusKind(pkg.status)">{{ statusText(pkg.status) }}</text>
+          <view class="row-right">
+            <text class="tag" :class="'tag--' + statusKind(pkg.status)">{{ statusText(pkg.status) }}</text>
+            <text class="chevron">{{ openedPackageId === pkg.packageId ? '▾' : '›' }}</text>
+          </view>
         </view>
         <view class="remain-row">
           <view class="remain">
             <text class="remain-label">剩余</text>
-            <text class="remain-num">{{ hours(pkg.remainingClasses) }}</text>
+            <text class="remain-num" :class="{ 'remain-num--zero': Number(pkg.remainingClasses) <= 0 }">
+              {{ hours(pkg.remainingClasses) }}
+            </text>
             <text class="remain-total">/ {{ hours(pkg.totalClasses) }} 节</text>
           </view>
           <text v-if="pkg.expiryDate" class="meta">至 {{ pkg.expiryDate }}</text>
+        </view>
+        <view v-if="overtimeHours(pkg) > 0" class="overtime">
+          超出课时 {{ hours(overtimeHours(pkg)) }} 节
         </view>
         <view class="bar">
           <view class="bar-fill" :style="{ width: percent(pkg) + '%' }" />
         </view>
         <view class="export-row">
-          <text class="export-count">已上课 {{ recordsOfPackage(pkg).length }} 节</text>
+          <text class="export-count">
+            已上课 {{ recordsOfPackage(pkg).length }} 节
+            <text v-if="openedPackageId !== pkg.packageId" class="export-hint"> · 点开看列表</text>
+          </text>
           <view
             class="export-btn"
             :class="{ 'export-btn--busy': exportingId === pkg.packageId }"
             hover-class="export-btn--hover"
-            @tap="exportPackage(pkg)"
+            @tap.stop="exportPackage(pkg)"
           >
             {{ exportingId === pkg.packageId ? '生成中…' : '导出图片' }}
+          </view>
+        </view>
+
+        <view v-if="openedPackageId === pkg.packageId" class="pkg-list" @tap.stop>
+          <view v-if="!recordsOfPackage(pkg).length" class="pkg-list-empty">该课包暂无上课记录</view>
+          <view
+            v-for="item in recordsOfPackage(pkg)"
+            :key="item.recordId"
+            class="pkg-rec"
+            :class="{ 'pkg-rec--over': item.lessonType === 'renewal_pending' }"
+          >
+            <view class="pkg-rec-main">
+              <view class="pkg-rec-top">
+                <text class="pkg-rec-date">{{ item.classDate || '—' }}</text>
+                <text class="pkg-rec-name">{{ item.courseTypeName || '课程' }}</text>
+                <text
+                  v-if="item.lessonType === 'renewal_pending'"
+                  class="pkg-rec-badge"
+                >超出</text>
+              </view>
+              <text class="pkg-rec-meta">{{ recMeta(item) }}</text>
+            </view>
+            <text class="pkg-rec-deduct">-{{ hours(item.classesDeducted) }}</text>
+            <image
+              v-if="photoOf(item)"
+              class="thumb thumb--sm"
+              :src="photoOf(item)"
+              mode="aspectFill"
+              lazy-load
+              @tap.stop="previewPhoto(item)"
+            />
           </view>
         </view>
       </view>
@@ -71,6 +120,8 @@
         </view>
       </view>
     </template>
+
+    <ObserverBar />
   </view>
 </template>
 
@@ -78,6 +129,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { authAPI } from '@/api'
+import ObserverBar from '@/components/ObserverBar.vue'
 import { requireLogin, useUserStore } from '@/stores/user'
 import { formatClassHours } from '@/utils/classHours'
 import { labelOf } from '@/utils/lessonType'
@@ -91,6 +143,8 @@ const loading = ref(true)
 const packages = ref([])
 const records = ref([])
 const exportingId = ref(null)
+/** 课包记录 Tab 里展开的课包；再点一次收起 */
+const openedPackageId = ref(null)
 
 const groups = computed(() => {
   const map = new Map()
@@ -112,6 +166,27 @@ function lessonLabel(type) {
 
 function recordsOfPackage(pkg) {
   return records.value.filter((r) => r.packageId === pkg.packageId)
+}
+
+/** 该课包「超出课时」累计节数（lessonType = renewal_pending） */
+function overtimeHours(pkg) {
+  let sum = 0
+  for (const r of recordsOfPackage(pkg)) {
+    if (r.lessonType === 'renewal_pending') {
+      sum += Number(r.classesDeducted) || 0
+    }
+  }
+  return Math.round(sum * 100) / 100
+}
+
+function togglePackage(pkg) {
+  const id = pkg.packageId
+  openedPackageId.value = openedPackageId.value === id ? null : id
+}
+
+function switchTab(next) {
+  tab.value = next
+  if (next !== 'package') openedPackageId.value = null
 }
 
 async function exportPackage(pkg) {
@@ -207,7 +282,7 @@ $green: #16a34a;
 
 .page {
   min-height: 100vh;
-  padding: 16rpx 24rpx calc(32rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx calc(160rpx + env(safe-area-inset-bottom));
   background: #f7f0e6;
   box-sizing: border-box;
 }
@@ -277,11 +352,21 @@ $green: #16a34a;
   box-shadow: 0 4rpx 16rpx rgba(42, 36, 31, 0.04);
 }
 
+.card--hover { opacity: 0.96; }
+.card--open { box-shadow: 0 8rpx 24rpx rgba(42, 36, 31, 0.08); }
+
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12rpx;
+}
+
+.row-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
 }
 
 .name {
@@ -292,6 +377,12 @@ $green: #16a34a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chevron {
+  font-size: 28rpx;
+  color: #cbbfb3;
+  line-height: 1;
 }
 
 .tag {
@@ -330,9 +421,21 @@ $green: #16a34a;
   color: #f37021;
 }
 
+.remain-num--zero { color: $muted; }
+
 .remain-total {
   font-size: 22rpx;
   color: $muted;
+}
+
+.overtime {
+  margin-top: 10rpx;
+  padding: 8rpx 16rpx;
+  font-size: 23rpx;
+  font-weight: 700;
+  color: #c13515;
+  background: #fff1ee;
+  border-radius: 12rpx;
 }
 
 .meta {
@@ -366,6 +469,10 @@ $green: #16a34a;
   color: $muted;
 }
 
+.export-hint {
+  color: #cbbfb3;
+}
+
 .export-btn {
   padding: 6rpx 22rpx;
   font-size: 22rpx;
@@ -377,6 +484,92 @@ $green: #16a34a;
 
 .export-btn--hover { background: #fff3e8; }
 .export-btn--busy { opacity: 0.5; }
+
+.pkg-list {
+  margin-top: 16rpx;
+  border-top: 1rpx solid #f1ece6;
+}
+
+.pkg-list-empty {
+  padding: 28rpx 0 8rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: $muted;
+}
+
+.pkg-rec {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f6f1eb;
+}
+
+.pkg-rec:last-child { border-bottom: none; }
+
+.pkg-rec--over .pkg-rec-deduct { color: #c13515; }
+
+.pkg-rec-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pkg-rec-top {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.pkg-rec-date {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: $ink;
+}
+
+.pkg-rec-name {
+  min-width: 0;
+  font-size: 24rpx;
+  color: $ink;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkg-rec-badge {
+  flex-shrink: 0;
+  padding: 0 10rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #c13515;
+  background: #fff1ee;
+  border-radius: 999rpx;
+}
+
+.pkg-rec-meta {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 21rpx;
+  color: $muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pkg-rec-deduct {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #f37021;
+}
+
+.thumb--sm {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 12rpx;
+}
 
 .group-date {
   display: block;

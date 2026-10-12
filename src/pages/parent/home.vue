@@ -4,8 +4,8 @@
 
     <view class="hero">
       <view class="hero-text">
-        <text class="hero-hi">你好，家长</text>
-        <text class="hero-sub">已通过手机号关联以下学员</text>
+        <text class="hero-hi">{{ userStore.observing ? '观察员视角' : '你好，家长' }}</text>
+        <text class="hero-sub">{{ userStore.observing ? '正在查看以下学员的家长端内容' : '已通过手机号关联以下学员' }}</text>
       </view>
       <view class="hero-badge">家长</view>
     </view>
@@ -39,6 +39,7 @@
     </view>
 
     <AppTabBar active="home" />
+    <ObserverBar with-tab />
   </view>
 </template>
 
@@ -47,6 +48,7 @@ import { ref } from 'vue'
 import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import { authAPI } from '@/api'
 import AppTabBar from '@/components/AppTabBar.vue'
+import ObserverBar from '@/components/ObserverBar.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 
 const userStore = useUserStore()

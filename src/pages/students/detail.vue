@@ -3,11 +3,22 @@
     <view v-if="loading" class="empty">加载中...</view>
     <template v-else-if="student">
       <view class="hero">
-        <view class="hero-name">{{ student.name }}</view>
-        <view v-if="student.nickname" class="hero-nick">{{ student.nickname }}</view>
-        <view class="hero-tags">
-          <text class="tag">{{ statusLabel(student.status) }}</text>
-          <text class="tag tag-fee">{{ feeStatusLabel(student.feeStatus) }}</text>
+        <view class="hero-main">
+          <view class="hero-name">{{ student.name }}</view>
+          <view v-if="student.nickname" class="hero-nick">{{ student.nickname }}</view>
+          <view class="hero-tags">
+            <text class="tag">{{ statusLabel(student.status) }}</text>
+            <text class="tag tag-fee">{{ feeStatusLabel(student.feeStatus) }}</text>
+          </view>
+        </view>
+        <view
+          class="observer-btn"
+          :class="{ 'observer-btn--busy': observing }"
+          hover-class="observer-btn--hover"
+          @tap="enterObserver"
+        >
+          <text class="observer-btn__title">观察员</text>
+          <text class="observer-btn__sub">家长视角</text>
         </view>
       </view>
 
@@ -143,7 +154,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { studentAPI, coursePackageAPI } from '@/api'
+import { studentAPI, coursePackageAPI, authAPI } from '@/api'
 import { requireLogin, useUserStore } from '@/stores/user'
 import {
   statusLabel,
@@ -162,6 +173,7 @@ const student = ref(null)
 const packageList = ref([])
 const loading = ref(true)
 const packagesLoading = ref(false)
+const observing = ref(false)
 const activeTab = ref('overview')
 let studentId = ''
 
@@ -227,6 +239,33 @@ async function loadPackages() {
   }
 }
 
+/** 观察员：以该学员家长身份查看家长端；退出后回到本页。无联系电话也可进入（仅看该学员）。 */
+function enterObserver() {
+  if (observing.value || !student.value) return
+  const phone = (student.value.phone || '').trim()
+  const content = phone
+    ? `将以「${student.value.name}」家长（${phone}）的身份查看家长端，仅可查看。可随时点底部「退出观察」返回。`
+    : `「${student.value.name}」未登记联系电话，将仅以该学员的家长视角查看，仅可查看。可随时点底部「退出观察」返回。`
+  uni.showModal({
+    title: '进入观察员模式',
+    content,
+    confirmText: '进入',
+    success: async (res) => {
+      if (!res.confirm) return
+      observing.value = true
+      try {
+        const data = await authAPI.observeParent(studentId)
+        userStore.enterObserver(data, `/pages/students/detail?id=${studentId}`)
+        uni.reLaunch({ url: '/pages/parent/home' })
+      } catch (e) {
+        uni.showToast({ title: e.message || '进入失败', icon: 'none', duration: 2500 })
+      } finally {
+        observing.value = false
+      }
+    }
+  })
+}
+
 function goAttendance() {
   uni.navigateTo({ url: `/pages/attendance/list?studentId=${studentId}` })
 }
@@ -257,6 +296,44 @@ function goPackageRecords(pkg) {
   background: linear-gradient(145deg, #1a1a2e 0%, #243b5e 100%);
   padding: 48rpx 32rpx 32rpx;
   color: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hero-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.observer-btn {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  padding: 14rpx 26rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f37021;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 20rpx rgba(243, 112, 33, 0.35);
+}
+
+.observer-btn--hover { opacity: 0.85; }
+.observer-btn--busy { opacity: 0.6; }
+
+.observer-btn__title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.observer-btn__sub {
+  display: block;
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .hero-name {

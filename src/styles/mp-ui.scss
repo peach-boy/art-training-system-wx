@@ -7,13 +7,13 @@
   min-height: 100vh;
   padding: 48rpx 32rpx;
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
-  background: var(--bg-page);
+  background: var(--bg-page, #f7f0e6);
   box-sizing: border-box;
 }
 
 .mp-flow-card {
   padding: 48rpx 36rpx;
-  background: var(--canvas);
+  background: var(--canvas, #ffffff);
   border-radius: 32rpx;
   box-shadow: 0 12rpx 40rpx rgba(42, 36, 31, 0.06);
   box-sizing: border-box;
@@ -27,7 +27,7 @@
 
 .mp-flow-kicker {
   font-size: 24rpx;
-  color: var(--primary);
+  color: var(--primary, #f37021);
   font-weight: 600;
 }
 
@@ -35,7 +35,7 @@
   margin-top: 12rpx;
   font-size: 40rpx;
   font-weight: 800;
-  color: var(--text-ink);
+  color: var(--text-ink, #2b1b12);
   line-height: 1.35;
 }
 
@@ -43,7 +43,7 @@
   margin-top: 16rpx;
   font-size: 26rpx;
   line-height: 1.65;
-  color: var(--text-muted);
+  color: var(--text-muted, #7d6e62);
 }
 
 .mp-btn {
@@ -57,9 +57,9 @@
   font-size: 30rpx;
   font-weight: 700;
   color: #fff;
-  background: var(--primary);
+  background: var(--primary, #f37021);
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-full, 9999rpx);
   box-sizing: border-box;
 }
 
@@ -69,7 +69,7 @@
 
 .mp-btn--ghost {
   margin-top: 16rpx;
-  color: var(--text-muted);
+  color: var(--text-muted, #7d6e62);
   background: transparent;
   font-weight: 500;
 }
@@ -86,20 +86,20 @@
   min-height: 100vh;
   padding: 32rpx 36rpx 48rpx;
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
-  background: var(--canvas);
+  background: var(--canvas, #ffffff);
   box-sizing: border-box;
 }
 
 .mp-doc-title {
   font-size: 40rpx;
   font-weight: 800;
-  color: var(--text-ink);
+  color: var(--text-ink, #2b1b12);
 }
 
 .mp-doc-updated {
   margin-top: 12rpx;
   font-size: 24rpx;
-  color: var(--text-muted);
+  color: var(--text-muted, #7d6e62);
 }
 
 .mp-doc-section {
@@ -110,7 +110,7 @@
   display: block;
   font-size: 30rpx;
   font-weight: 700;
-  color: var(--text-ink);
+  color: var(--text-ink, #2b1b12);
 }
 
 .mp-doc-p {
@@ -118,5 +118,5 @@
   margin-top: 12rpx;
   font-size: 26rpx;
   line-height: 1.65;
-  color: var(--text-muted);
+  color: var(--text-muted, #7d6e62);
 }

@@ -13,10 +13,11 @@
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" hover-class="menu-item--hover" @tap="onLogout">
-        <text class="menu-title menu-title--danger">退出登录</text>
+        <text class="menu-title menu-title--danger">{{ userStore.observing ? '退出观察' : '退出登录' }}</text>
         <text class="menu-arrow">›</text>
       </view>
     </view>
+    <ObserverBar with-tab />
   </PageShell>
 </template>
 
@@ -24,6 +25,7 @@
 import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/PageShell.vue'
+import ObserverBar from '@/components/ObserverBar.vue'
 import { useUserStore, requireLogin } from '@/stores/user'
 import { getRoleDisplay } from '@/utils/role'
 import { setSkipSilentWechatLogin } from '@/utils/storage'
@@ -53,7 +55,13 @@ function goHome() {
   uni.reLaunch({ url: userStore.role === 'parent' ? '/pages/parent/home' : '/pages/home/index' })
 }
 
-function onLogout() {
+async function onLogout() {
+  // 观察员模式下，「退出」是回到管理端，而不是退出登录
+  if (userStore.observing) {
+    const backUrl = await userStore.exitObserver()
+    uni.reLaunch({ url: backUrl || '/pages/login/login' })
+    return
+  }
   uni.showModal({
     title: '退出登录',
     content: '确定退出当前账号？',

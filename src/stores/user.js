@@ -10,7 +10,11 @@ import {
   setCurrentStoreId,
   clearAuth,
   isLoggedIn as storageIsLoggedIn,
-  takePendingPcTicket
+  takePendingPcTicket,
+  isObserving,
+  saveObserverBackup,
+  getObserverReturnUrl,
+  restoreObserverBackup
 } from '@/utils/storage'
 import { notifyStoreChanged } from '@/utils/storeEvents'
 import { ALL_STORES_ID } from '@/utils/storeScope'
@@ -21,7 +25,9 @@ export const useUserStore = defineStore('user', {
     userInfo: getUserInfo(),
     /** 与 storage 同步，供页面 watch 店铺变更 */
     currentStoreId: getCurrentStoreId(),
-    storeRevision: 0
+    storeRevision: 0,
+    /** 管理员正在以家长视角观察 */
+    observing: isObserving()
   }),
 
   getters: {
@@ -99,7 +105,36 @@ export const useUserStore = defineStore('user', {
     clearAuth() {
       this.token = ''
       this.userInfo = null
+      this.observing = false
       clearAuth()
+    },
+
+    /** 管理员进入家长视角：备份自己的登录态，再切换为家长登录态 */
+    enterObserver(parentLogin, returnUrl) {
+      saveObserverBackup(returnUrl)
+      this.applyLogin(parentLogin)
+      this.observing = true
+    },
+
+    /** 退出观察：结束家长观察会话，恢复管理员登录态 */
+    async exitObserver() {
+      const returnUrl = getObserverReturnUrl()
+      try {
+        await authAPI.logout()
+      } catch (e) {
+        // 观察会话本身会过期，失败不影响返回
+      }
+      const restored = restoreObserverBackup()
+      this.observing = false
+      if (!restored) {
+        this.clearAuth()
+        return ''
+      }
+      this.token = getToken()
+      this.userInfo = getUserInfo()
+      this.currentStoreId = getCurrentStoreId()
+      this.storeRevision += 1
+      return returnUrl || '/pages/students/list'
     },
 
     async logout() {

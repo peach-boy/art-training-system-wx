@@ -1,5 +1,5 @@
 import { BASE_URL } from './config'
-import { getToken, getCurrentStoreId, clearAuth } from './storage'
+import { getToken, getCurrentStoreId, clearAuth, isObserving, restoreObserverBackup } from './storage'
 
 function buildQuery(params) {
   if (!params) return ''
@@ -33,6 +33,12 @@ export function request(options) {
       success(res) {
         const body = res.data
         if (res.statusCode === 401) {
+          // 观察员会话过期：回到管理员自己的登录态，而不是踢到登录页
+          if (isObserving() && restoreObserverBackup()) {
+            uni.reLaunch({ url: '/pages/home/index' })
+            reject(new Error('观察已结束，已返回管理端'))
+            return
+          }
           clearAuth()
           uni.reLaunch({ url: '/pages/login/login' })
           reject(new Error('未授权，请重新登录'))
