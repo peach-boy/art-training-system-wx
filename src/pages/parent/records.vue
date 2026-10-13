@@ -3,7 +3,10 @@
     <view class="head">
       <view class="head-avatar">{{ (studentName || '学').slice(0, 1) }}</view>
       <text class="title">{{ studentName || '学员' }}</text>
-      <text class="sub">{{ packages.length }} 个课包 · {{ records.length }} 节课</text>
+      <view class="head-stats">
+        <text class="sub">{{ packages.length }} 个课包 · {{ records.length }} 节课</text>
+        <text v-if="totalOvertimeHours > 0" class="sub-over">超出 {{ hours(totalOvertimeHours) }} 节</text>
+      </view>
     </view>
 
     <view class="seg">
@@ -19,7 +22,11 @@
         v-for="pkg in packages"
         :key="pkg.packageId"
         class="card"
-        :class="{ 'card--open': openedPackageId === pkg.packageId }"
+        :class="{
+          'card--open': openedPackageId === pkg.packageId,
+          'card--ended': isPackageEnded(pkg),
+          'card--ended-over': isPackageEnded(pkg) && overtimeHours(pkg) > 0
+        }"
         hover-class="card--hover"
         @tap="togglePackage(pkg)"
       >
@@ -33,12 +40,22 @@
         <view class="remain-row">
           <view class="remain">
             <text class="remain-label">剩余</text>
-            <text class="remain-num" :class="{ 'remain-num--zero': Number(pkg.remainingClasses) <= 0 }">
+            <text
+              class="remain-num"
+              :class="{
+                'remain-num--zero': Number(pkg.remainingClasses) <= 0,
+                'remain-num--over': isPackageEnded(pkg) && overtimeHours(pkg) > 0
+              }"
+            >
               {{ hours(pkg.remainingClasses) }}
             </text>
             <text class="remain-total">/ {{ hours(pkg.totalClasses) }} 节</text>
           </view>
           <text v-if="pkg.expiryDate" class="meta">至 {{ pkg.expiryDate }}</text>
+        </view>
+        <view v-if="hasMoney(pkg)" class="money-row">
+          <text class="money-label">金额</text>
+          <text class="money">¥{{ money(pkg.actualPrice) }}</text>
         </view>
         <view v-if="overtimeHours(pkg) > 0" class="overtime">
           超出课时 {{ hours(overtimeHours(pkg)) }} 节
@@ -105,6 +122,7 @@
                 <text class="name">{{ item.courseTypeName || '课程' }}</text>
                 <text class="deduct">-{{ hours(item.classesDeducted) }}</text>
               </view>
+              <text v-if="item.packageName" class="rec-pkg">{{ item.packageName }}</text>
               <text class="rec-meta">{{ recMeta(item) }}</text>
               <text v-if="item.notes" class="rec-note">{{ item.notes }}</text>
             </view>
@@ -156,8 +174,27 @@ const groups = computed(() => {
   return Array.from(map, ([date, items]) => ({ date, items }))
 })
 
+const totalOvertimeHours = computed(() => {
+  let sum = 0
+  for (const pkg of packages.value) {
+    sum += overtimeHours(pkg)
+  }
+  return Math.round(sum * 100) / 100
+})
+
 function hours(value) {
   return formatClassHours(value)
+}
+
+function hasMoney(pkg) {
+  const v = pkg?.actualPrice
+  return v !== null && v !== undefined && v !== '' && !Number.isNaN(Number(v))
+}
+
+/** 金额：整数不带小数，否则保留两位 */
+function money(value) {
+  const n = Number(value) || 0
+  return Number.isInteger(n) ? String(n) : n.toFixed(2)
 }
 
 function lessonLabel(type) {
@@ -232,6 +269,11 @@ function percent(pkg) {
   const remain = Number(pkg.remainingClasses) || 0
   if (total <= 0) return 0
   return Math.max(0, Math.min(100, Math.round((remain / total) * 100)))
+}
+
+function isPackageEnded(pkg) {
+  const s = pkg?.status
+  return s === 'completed' || s === 'consumed' || s === 'expired'
 }
 
 function statusKind(status) {
@@ -313,10 +355,23 @@ $green: #16a34a;
   color: $ink;
 }
 
-.sub {
+.head-stats {
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.sub {
   font-size: 22rpx;
   color: $muted;
+}
+
+.sub-over {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #c13515;
 }
 
 .seg {
@@ -354,6 +409,57 @@ $green: #16a34a;
 
 .card--hover { opacity: 0.96; }
 .card--open { box-shadow: 0 8rpx 24rpx rgba(42, 36, 31, 0.08); }
+
+.card--ended {
+  background: #f9f7f5;
+  box-shadow: none;
+
+  .name {
+    color: #9a9189;
+  }
+
+  .money {
+    color: #9a9189;
+  }
+
+  .remain-label,
+  .remain-total,
+  .money-label,
+  .meta,
+  .export-count,
+  .export-hint {
+    color: #b5aea6;
+  }
+
+  .remain-num {
+    color: #b5aea6;
+  }
+
+  .bar {
+    background: #ece7e1;
+  }
+
+  .bar-fill {
+    background: #d4cdc4;
+  }
+
+  .export-btn {
+    color: #b5aea6;
+    border-color: #ddd6ce;
+  }
+
+  .chevron {
+    color: #d4cdc4;
+  }
+}
+
+.card--ended-over {
+  border: 2rpx solid rgba(193, 53, 21, 0.22);
+
+  .remain-num--over {
+    color: #c13515;
+  }
+}
 
 .row {
   display: flex;
@@ -423,9 +529,31 @@ $green: #16a34a;
 
 .remain-num--zero { color: $muted; }
 
+.remain-num--over {
+  color: #c13515;
+}
+
 .remain-total {
   font-size: 22rpx;
   color: $muted;
+}
+
+.money-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.money-label {
+  font-size: 22rpx;
+  color: $muted;
+}
+
+.money {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: $ink;
 }
 
 .overtime {
@@ -613,6 +741,17 @@ $green: #16a34a;
   font-size: 28rpx;
   font-weight: 800;
   color: #f37021;
+}
+
+.rec-pkg {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #f37021;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rec-meta {
