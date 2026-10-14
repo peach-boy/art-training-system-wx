@@ -39,6 +39,8 @@ export const useUserStore = defineStore('user', {
       const r = state.userInfo?.role
       return r === 'super_admin' || r === 'finance_admin' || r === 'admin'
     },
+    /** 可查看金额（课包实付、课时收入等）；教师角色不可见 */
+    canViewAmount: (state) => ADMIN_ROLES.includes(state.userInfo?.role),
     isPrivilegedAdmin: (state) => state.userInfo?.role === 'super_admin',
     displayName: (state) =>
       state.userInfo?.realName || state.userInfo?.username || '用户',

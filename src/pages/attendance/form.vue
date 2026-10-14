@@ -68,7 +68,7 @@
             <text class="row-arrow">›</text>
           </view>
 
-          <view v-if="lessonType === 'temp'" class="row">
+          <view v-if="lessonType === 'temp' && userStore.canViewAmount" class="row">
             <text class="row-label">收入<text class="req">*</text></text>
             <input
               v-model="income"
@@ -283,6 +283,9 @@ const moreFilled = computed(() => !!(coursewareLabel.value || customCoursewareNa
 const summaryMeta = computed(() => {
   const type = lessonTypeLabels[lessonTypeIndex.value]
   if (lessonType.value === 'temp') {
+    if (!userStore.canViewAmount) {
+      return `${type} · ${classDate.value}`
+    }
     return `${type} · ${income.value ? '¥' + income.value : '待填收入'} · ${classDate.value}`
   }
   return `${type} · 扣 ${formatClassHours(classesDeducted.value)} 节 · ${classDate.value}`
@@ -714,7 +717,11 @@ function buildSubmitData() {
     classDate: classDate.value,
     dayOfWeek: dayOfWeekFromDate(classDate.value),
     classesDeducted: lessonType.value === 'temp' ? 0 : classesDeducted.value,
-    income: lessonType.value === 'temp' ? Number(income.value) : undefined,
+    // 教师不提交收入：新增由后端记 0；编辑省略字段以免覆盖管理员已填金额
+    income:
+      lessonType.value === 'temp' && userStore.canViewAmount
+        ? Number(income.value)
+        : undefined,
     notes: notes.value || '',
     imageUrl: imageUrl.value || null
   }
@@ -729,7 +736,9 @@ function getMissing() {
   if (!userStore.isAdmin && !userStore.userInfo?.teacherId) return '账号未关联上课员工，请联系管理员'
   if (!classDate.value) return '请选择上课日期'
   if (lessonType.value === 'regular' && !packageId.value) return '正式课需选择课包'
-  if (lessonType.value === 'temp' && !income.value) return '临时课需填写收入'
+  if (lessonType.value === 'temp' && userStore.canViewAmount && !income.value) {
+    return '临时课需填写收入'
+  }
   return ''
 }
 

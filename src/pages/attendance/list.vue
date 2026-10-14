@@ -141,7 +141,7 @@
           <view class="record-meta">
             <view class="record-course mp-t mp-t--ellipsis">{{ item.courseTypeName || '未填课程类型' }}</view>
             <view v-if="item.lessonType !== 'temp'" class="record-deduct mp-t">扣 {{ formatClassHours(item.classesDeducted) }} 节</view>
-            <view v-else-if="item.income != null" class="record-deduct mp-t">¥{{ item.income }}</view>
+            <view v-else-if="userStore.canViewAmount && item.income != null" class="record-deduct mp-t">¥{{ item.income }}</view>
           </view>
           <view v-if="item.packageName || item.coursewareName" class="record-extra">
             <text v-if="item.packageName" class="extra-item">课包 {{ item.packageName }}</text>

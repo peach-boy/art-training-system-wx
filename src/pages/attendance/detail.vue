@@ -35,7 +35,7 @@
         <text class="label">扣除课时</text>
         <text>{{ formatClassHours(record.classesDeducted) }}</text>
       </view>
-      <view v-if="record.income != null" class="info-row">
+      <view v-if="userStore.canViewAmount && record.income != null" class="info-row">
         <text class="label">课时收入</text>
         <text>¥{{ record.income }}</text>
       </view>
@@ -60,12 +60,13 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { attendanceAPI } from '@/api'
-import { requireLogin } from '@/stores/user'
+import { requireLogin, useUserStore } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
 import { formatClassHours } from '@/utils/classHours'
 import { formatDateTime } from '@/utils/format'
 import { imageFullUrl } from '@/utils/media'
 
+const userStore = useUserStore()
 const record = ref(null)
 const loading = ref(true)
 const lessonTypeLabel = ref('')

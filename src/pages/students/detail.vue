@@ -61,7 +61,7 @@
             <text class="label">最新课包总课时</text>
             <text class="value">{{ student.latestTotalClasses ?? '—' }} 节</text>
           </view>
-          <view class="row">
+          <view v-if="userStore.canViewAmount" class="row">
             <text class="label">累计报名实付</text>
             <text class="value">{{ formatMoney(totalEnrollment) }}</text>
           </view>
@@ -108,7 +108,7 @@
             </view>
             <view class="pkg-tags">
               <text class="pkg-tag">{{ packageKindLabel(pkg.packageKind) }}</text>
-              <text v-if="pkg.actualPrice != null" class="pkg-tag">{{ formatMoney(pkg.actualPrice) }}</text>
+              <text v-if="userStore.canViewAmount && pkg.actualPrice != null" class="pkg-tag">{{ formatMoney(pkg.actualPrice) }}</text>
             </view>
             <view class="pkg-meta">
               <view class="pkg-meta-item">

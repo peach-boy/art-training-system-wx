@@ -31,7 +31,7 @@
             <text class="cell-label">有效期至</text>
             <text class="cell-val">{{ pkg.expiryDate || '—' }}</text>
           </view>
-          <view class="cell">
+          <view v-if="userStore.canViewAmount" class="cell">
             <text class="cell-label">实付</text>
             <text class="cell-val">{{ formatMoney(pkg.actualPrice) }}</text>
           </view>
@@ -96,7 +96,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { coursePackageAPI, fetchPackageAttendanceRecords } from '@/api'
-import { requireLogin } from '@/stores/user'
+import { requireLogin, useUserStore } from '@/stores/user'
 import { labelOf } from '@/utils/lessonType'
 import {
   packageStatusLabel,
@@ -105,6 +105,7 @@ import {
 import { formatClassHours, formatRemainingClasses } from '@/utils/classHours'
 import { generatePackageReport, shareReportImage } from '@/utils/packageReport'
 
+const userStore = useUserStore()
 const loading = ref(true)
 const notFound = ref(false)
 const exporting = ref(false)
